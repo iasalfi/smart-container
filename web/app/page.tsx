@@ -20,7 +20,7 @@ import type { Container, Status } from "@/lib/types";
 type SortKey = "id" | "cargo" | "route" | "temp" | "health";
 
 export default function FleetPage() {
-  const { t, lang, persona, alerts, fleet, journeys, tickets, apiError, retry } = useApp();
+  const { t, lang, persona, alerts, fleet, journeys, tickets, apiError, retry, cases, registry, workOrders } = useApp();
   const [f, setF] = useState<FleetFilter>(EMPTY_FILTER);
   const [selected, setSelected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -46,10 +46,11 @@ export default function FleetPage() {
   const selProfile = sel ? PROFILES.find((q) => q.id === sel.profileId) : undefined;
   const ids = useMemo(() => new Set(scope.map((c) => c.id)), [scope]);
   const scopedAlerts = alerts.filter((a) => ids.has(a.containerId) && a.state === "open");
-  const personaStats = useMemo(() => analyticsFor(persona, scope, alertsIn(alerts, scope), journeysIn(journeys, scope), tickets, SNAPSHOT_MS), [persona, scope, alerts, journeys, tickets]);
+  const personaStats = useMemo(() => analyticsFor(persona, scope, alertsIn(alerts, scope), journeysIn(journeys, scope), tickets, SNAPSHOT_MS, registry, workOrders), [persona, scope, alerts, journeys, tickets, registry, workOrders]);
   const insightAlerts = useMemo(() => { const only = persona === "quality" ? QUALITY_TYPES : persona === "security" ? SECURITY_TYPES : null; return only ? alerts.filter((a) => only.includes(a.type)) : alerts; }, [alerts, persona]);
   const panel =
     persona === "quality" ? "health" : persona === "security" ? "door" : "alerts";
+  const needs = useMemo(() => cases.filter((c) => c.state === "open" && ids.has(c.containerId)).slice(0, 6), [cases, ids]);
   const lowHealth = useMemo(() => [...scope].sort((a, b) => a.healthScore - b.healthScore).slice(0, 8), [scope]);
   const doorWatch = useMemo(() => scope.filter((c) => c.door === "open" || c.lock === "unlocked" || c.lock === "cut").slice(0, 8), [scope]);
   const clear = () => { setF(EMPTY_FILTER); setCorridor(null); setLimit(12); };
@@ -135,8 +136,18 @@ export default function FleetPage() {
             </section>
           ) : null}
           <section className="card" data-testid={`panel-${panel}`}>
-            <h2>{panel === "alerts" ? t("panel_alerts") : panel === "health" ? t("panel_health") : t("panel_door")}</h2>
-            {panel === "alerts" ? (scopedAlerts.length === 0 ? <p className="muted">{t("no_alerts")}</p> : (
+            <h2>{panel === "alerts" ? (persona === "customer" ? t("panel_alerts") : t("cs_title")) : panel === "health" ? t("panel_health") : t("panel_door")}</h2>
+            {panel === "alerts" && persona !== "customer" ? (
+              <>
+                <p className="muted small" data-testid="needs-sub">{t("cs_summary", { n: cases.filter((c) => c.state !== "resolved").length, a: scopedAlerts.length })}</p>
+                {needs.length === 0 ? <p className="muted">{t("ct_none")}</p> : (
+                  <ul className="list" data-testid="needs-list">{needs.map((c) => (
+                    <li key={c.id} data-testid="needs-row"><span className={`prio prio-${c.priority}`}>P{c.priority}</span><Link href={`/container/?id=${c.containerId}`}><strong>{c.containerId}</strong> {t(`alert_type_${c.type}` as const)}{c.merged > 1 ? ` · ${t("cs_merged", { n: c.merged })}` : ""}</Link></li>))}</ul>
+                )}
+                <Link className="btn small ghost" href="/alerts/" data-testid="needs-all">{t("ct_see_all")}</Link>
+              </>
+            ) : null}
+            {panel === "alerts" && persona === "customer" ? (scopedAlerts.length === 0 ? <p className="muted">{t("no_alerts")}</p> : (
               <ul className="list">{scopedAlerts.slice(0, 8).map((a) => (
                 <li key={a.id}><span className={`dot dot-${a.severity}`} aria-hidden="true" /><Link href={`/container/?id=${a.containerId}`}><strong>{a.containerId}</strong> {t(`alert_type_${a.type}` as const)}</Link></li>))}</ul>)) : null}
             {panel === "health" ? (<ul className="list">{lowHealth.map((c) => (<li key={c.id}><Link href={`/health/?id=${c.id}`}><strong>{c.id}</strong> {Math.round(c.healthScore)}</Link></li>))}</ul>) : null}
