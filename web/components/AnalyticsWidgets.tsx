@@ -3,6 +3,7 @@ import { useApp } from "@/app/providers";
 import type { Analytics, Kpi, WidgetId } from "@/lib/analytics";
 import { PROFILES } from "@/lib/profiles";
 import { formatMinutes } from "@/lib/itsm";
+import Link from "next/link";
 import { STATUS_COLOR } from "./ui";
 import { BarList, Columns, Donut, Panel, SERIES } from "./Charts";
 import type { Key } from "@/lib/i18n";
@@ -17,7 +18,7 @@ export function KpiTile({ k }: { k: Kpi }) {
   const { t } = useApp();
   return (
     <div className={`an-kpi tone-${k.tone}`} data-testid={`an-kpi-${k.id}`}>
-      <span className="an-kpi-n">{k.value.toLocaleString("en-US")}{k.unit === "pct" ? "%" : ""}</span>
+      <span className="an-kpi-n">{k.value.toLocaleString("en-US")}{k.unit === "pct" ? "%" : ""}{k.unit === "min" ? <small className="an-unit"> {t("an_unit_min")}</small> : null}</span>
       <span className="an-kpi-l">{t(`ank_${k.id}` as Key)}</span>
       {k.tone !== "neutral" ? <span className="sr-only">{t(TONE_KEY[k.tone])}</span> : null}
     </div>
@@ -63,6 +64,45 @@ export function Widget({ id, a }: { id: WidgetId; a: Analytics }) {
       return <Panel id={id} title={title}><Donut testid="an-locks" centre={a.lockState.reduce((s, x) => s + x.n, 0).toLocaleString("en-US")} caption={t("kpi_total")} slices={a.lockState.map((s) => ({ label: t(`lock_${s.key}` as Key), n: s.n, color: LOCK_COLORS[s.key] }))} /></Panel>;
     case "eta_buckets":
       return <Panel id={id} title={title}><BarList rows={a.etaBuckets.map((b, k) => ({ label: t(`ane_${b.key}` as Key), n: b.n, color: SERIES[k] }))} /></Panel>;
+    case "partner_league":
+      return (
+        <Panel id={id} title={title}>
+          {a.people.partners.length ? <BarList max={100} rows={a.people.partners.map((p) => ({ label: p.name, n: p.score, color: health(p.score), sub: `${t("pp_grade", { g: p.grade })} · ${t("an_pl_otp")} ${p.otp}% · ${t("an_pl_alerts")} ${p.alertsPer100}` }))} /> : none}
+          <p className="muted small">{t("an_pl_note")}</p>
+        </Panel>
+      );
+    case "partner_share":
+      return <Panel id={id} title={title}>{a.people.partners.length ? <Donut testid="an-partner-share" centre={a.people.partners.reduce((s, p) => s + p.containers, 0).toLocaleString("en-US")} caption={t("kpi_total")} slices={a.people.partners.map((p, k) => ({ label: p.name, n: p.containers, color: SERIES[k % SERIES.length] }))} /> : none}</Panel>;
+    case "driver_risk": {
+      const colors = { high: "#c9695d", watch: "#dcae5f", good: "#6fa585" } as const;
+      return <Panel id={id} title={title}><Donut testid="an-driver-risk" centre={String(a.people.driverScore)} caption={t("an_pl_safety")} slices={(["high", "watch", "good"] as const).map((b) => ({ label: t(`pp_risk_${b}` as Key), n: a.people.bands[b], color: colors[b] }))} /></Panel>;
+    }
+    case "driver_events":
+      return <Panel id={id} title={title}><BarList rows={a.people.events.map((e) => ({ label: t(`pp_evt_${e.type}` as Key), n: e.n }))} /></Panel>;
+    case "licence_expiry":
+      return (
+        <Panel id={id} title={title}>
+          <BarList rows={(["expired", "d30", "d90", "ok"] as const).map((k) => ({ label: t(`pp_lic_${k}` as Key), n: a.people.licence[k], color: k === "expired" ? "#c9695d" : k === "d30" ? "#dcae5f" : k === "d90" ? "#a9b86f" : "#6fa585" }))} />
+          {a.people.onExpiredLicence > 0 ? <p className="small" data-testid="an-expired-note">{t("an_road_expired", { n: a.people.onExpiredLicence })}</p> : null}
+        </Panel>
+      );
+    case "driver_top_risk":
+      return <Panel id={id} title={title}>{a.people.drivers.length ? <BarList max={100} rows={a.people.drivers.slice(0, 8).map((d) => ({ label: d.name, n: d.score, color: health(d.score), sub: t("an_driver_line", { c: d.containers, e: d.events30 }) }))} /> : none}</Panel>;
+    case "mro_board":
+      return (
+        <Panel id={id} title={title}>
+          <Columns testid="an-mro" cols={a.mro.stages.map((s, k) => ({ label: t(`mt_stage_${s.key}` as Key), n: s.n, color: SERIES[k % SERIES.length] }))} />
+          <p className="muted small">{t("an_mro_split", { a: a.mro.preventive, b: a.mro.reactive })}</p>
+          <Link className="btn small ghost" href="/maintenance/">{t("nav_maintenance")}</Link>
+        </Panel>
+      );
+    case "device_health":
+      return (
+        <Panel id={id} title={title}>
+          <p data-testid="an-dev-total"><b>{t("an_dev_total", { n: a.devices.total })}</b></p>
+          <BarList rows={a.devices.byReason.map((r) => ({ label: t(`wo_reason_${r.key}` as Key), n: r.n }))} />
+        </Panel>
+      );
     case "cargo_mix":
       return <Panel id={id} title={title}>{a.cargoMix.length ? <Donut testid="an-cargo-mix" centre={a.cargoMix.reduce((s, x) => s + x.n, 0).toLocaleString("en-US")} caption={t("kpi_total")} slices={a.cargoMix.map((r, k) => ({ label: cargoName(r.key), n: r.n, color: SERIES[k % SERIES.length] }))} /> : none}</Panel>;
   }
