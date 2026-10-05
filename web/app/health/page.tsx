@@ -41,7 +41,7 @@ function HealthView({ c, s }: { c: Container; s: Sample[] }) {
           <p className="muted small">{t("health_model")}</p>
         </Card>
       </div>
-      <LineChart title={t("health_trend")} values={trend} minAgo={idx.map((i) => s[i].minAgo)} unit="" color="#0E8F86" yDomain={[0, 100]} />
+      <LineChart title={t("health_trend")} values={trend} minAgo={idx.map((i) => s[i].minAgo)} unit="" color="#4f8f84" yDomain={[0, 100]} />
     </>
   );
 }
