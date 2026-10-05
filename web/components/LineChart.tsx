@@ -31,10 +31,10 @@ export function LineChart({ title, values, minAgo, band, unit, color = "#c9695d"
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${title}. ${values.length} readings, latest ${values[values.length - 1]} ${unit}`}>
         <title id={id}>{title}</title>
         {band ? <rect x={PL} y={y(band[1])} width={W - PL - PR} height={Math.max(0, y(band[0]) - y(band[1]))} fill="#6fa585" opacity="0.14" data-testid="chart-band" /> : null}
-        {ticks.map((tv, i) => (<g key={i}><line x1={PL} x2={W - PR} y1={y(tv)} y2={y(tv)} stroke="#e5dfd0" /><text x={PL - 6} y={y(tv) + 4} textAnchor="end" fontSize="11" fill="#5c6660">{tv.toFixed(1)}</text></g>))}
-        {hours.map((h) => { const idx = Math.round(((24 - h) / 24) * (values.length - 1)); return (<text key={h} x={x(idx)} y={H - 6} textAnchor="middle" fontSize="11" fill="#5c6660">{h === 0 ? "now" : `-${h}h`}</text>); })}
+        {ticks.map((tv, i) => (<g key={i}><line x1={PL} x2={W - PR} y1={y(tv)} y2={y(tv)} stroke="#e3e9f0" /><text x={PL - 6} y={y(tv) + 4} textAnchor="end" fontSize="11" fill="#5f6b80">{tv.toFixed(1)}</text></g>))}
+        {hours.map((h) => { const idx = Math.round(((24 - h) / 24) * (values.length - 1)); return (<text key={h} x={x(idx)} y={H - 6} textAnchor="middle" fontSize="11" fill="#5f6b80">{h === 0 ? "now" : `-${h}h`}</text>); })}
         <path d={d} fill="none" stroke={color} strokeWidth="2.4" strokeLinejoin="round" />
-        {cursor !== null && cursor >= 0 && cursor < values.length ? (<g data-testid="chart-cursor"><line x1={x(cursor)} x2={x(cursor)} y1={PT} y2={H - PB} stroke="#2f4f46" strokeDasharray="4 3" /><circle cx={x(cursor)} cy={y(values[cursor])} r="4.5" fill="#2f4f46" /></g>) : null}
+        {cursor !== null && cursor >= 0 && cursor < values.length ? (<g data-testid="chart-cursor"><line x1={x(cursor)} x2={x(cursor)} y1={PT} y2={H - PB} stroke="#2b3a55" strokeDasharray="4 3" /><circle cx={x(cursor)} cy={y(values[cursor])} r="4.5" fill="#2b3a55" /></g>) : null}
       </svg>
       <span className="sr-only">{minAgo.length}</span>
     </figure>
