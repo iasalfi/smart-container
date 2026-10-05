@@ -11,7 +11,7 @@ Every automated test carries one ID from this bank in its title. `npm run test:b
 
 Pipeline order: lint and type check, test-bank check, unit and API tests, build of both services, end-to-end tests (feature, UI, UX, accessibility, service boundary), then production deploy of the API and the web UI only when every stage is green, then a smoke test on both live URLs with automatic rollback.
 
-Totals: 273 cases. Unit 93, API 35, end-to-end 145. Regression 165, progression 48, negative 60.
+Totals: 293 cases. Unit 100, API 35, end-to-end 158. Regression 183, progression 49, negative 61.
 
 ## Unit tests: data, health model, alerts, route, filters, language
 
@@ -357,3 +357,28 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 | TC-E-165 | Operations | regression | NFR-13 | Operations work in Arabic with right to left layout | Switch Operations to Arabic | Arabic labels, right to left layout and Arabic error text |
 | TC-E-166 | Operations | regression | NFR-11 | Operations pages fit a phone without sideways scrolling | Open the three Operations pages at 390 px | No sideways scrolling |
 | TC-E-167 | UI | regression | NFR-10 | The theme is a soft grey-blue canvas with a dark navy sidebar, a white top bar and an indigo accent | Read the theme tokens, the sidebar and the top bar colours | Grey-blue background, indigo accent, dark sidebar, white top bar and the hero gradient, with no old navy, blue or sand |
+
+## Analytics, reports and persona dashboards
+
+| ID | Area | Suite | Ref | Case | Steps | Expected result |
+|---|---|---|---|---|---|---|
+| TC-U-117 | Analytics | regression | FR-64 | a customer is scoped to its own containers and everyone else sees the whole fleet | Scope the fleet, alerts and journeys for each persona | Operator and quality see 1,000 containers, a customer sees only its own, with matching alerts and journeys |
+| TC-U-118 | Analytics | regression | FR-62 | each persona gets its own four KPIs and widget set | Compute the analytics for every persona | Four unique KPI ids per persona, the widget list of that persona, finite values |
+| TC-U-119 | Analytics | regression | FR-62 | the analytics numbers add up to the scope they were computed for | Sum the status, health, cargo, lock and delay series | Every series adds up to the containers or journeys in scope |
+| TC-U-120 | Analytics | regression | FR-62 | quality sees only quality alert types and security only security types | Count open alerts by type for both personas | Only the types of that persona, three security types listed |
+| TC-U-121 | Analytics | regression | FR-62 | delay bands and ETA buckets cover every value once | Bucket edge delays and the customer journeys | Edges fall in the right band and the arrival buckets add up to all journeys |
+| TC-U-122 | Reports | regression | FR-63 | every report in the catalogue builds with rows that match its columns, and only for the personas that own it | Build every report for every persona | Row and total widths match the columns, a customer has no operator or security report, totals equal 1,000 |
+| TC-U-123 | Reports | regression | FR-63 | CSV export quotes commas and quotes, neutralises formulas and starts with a byte order mark | Export a table with commas, quotes, a formula and a line break | Cells are quoted, the formula is prefixed, a BOM leads and lines end in CRLF |
+| TC-E-168 | Analytics | regression | FR-62 | Analytics opens for the operator with journey, corridor and service desk widgets | Open Analytics as the operator | Four operator KPIs, five widgets, 997 journeys on the road and 71 delayed |
+| TC-E-169 | Analytics | regression | FR-62 | Analytics changes its KPIs and widgets with the persona | Switch through all four personas on Analytics | Each persona shows its own KPIs and widgets and none of the others |
+| TC-E-170 | Analytics | regression | FR-64 | A customer sees only its own containers in analytics and reports | Open Analytics and Reports as the customer | Scope names the customer, fewer than 1,000 containers, no service desk, no operator or security reports, no other customer rows |
+| TC-E-171 | Dashboard | regression | FR-64 | The dashboard strip adapts to the persona and links to analytics and reports | Switch personas on the Fleet page and follow the links | Strip KPIs, side panel and alert types follow the persona and the links keep the persona |
+| TC-E-172 | Navigation | regression | FR-62 | The sidebar lists Analytics and Reports for every persona and marks the current one | Check the sidebar for each persona and open Reports | Both links for all personas, Reports marked current and Fleet not |
+| TC-E-173 | Reports | regression | FR-63 | Each persona gets its own report catalogue and the report body follows the pick | Open Reports for each persona and pick a report | Catalogue per persona, the first report opens by default, the body follows the pick |
+| TC-E-174 | Reports | regression | FR-63 | The daily operations report totals match the fleet and can be filtered by cargo and text | Read the totals, filter by text and by cargo | 1,000 containers in the total row, text filter hides the total, cargo filter shows 158 dairy |
+| TC-E-175 | Reports | regression | FR-63 | A report exports to a CSV file that matches the table | Export the daily operations report | A CSV with a BOM, the table header, eight rows and a total row |
+| TC-E-176 | Reports | progression | FR-63 | A report with no matching rows says so, and long reports page in steps | Page through journey on-time performance and search for nothing | 25 rows, 50 after Show more, an empty message and no Show more for no match |
+| TC-E-177 | A11y Analytics | regression | NFR-12 | Analytics and reports have no serious accessibility violations for any persona | Scan Analytics, Reports and the Fleet strip for all personas | No serious or critical violations |
+| TC-E-178 | Analytics | regression | FR-62 | Analytics and reports work in Arabic with right to left layout | Switch to Arabic on Analytics, Reports and Fleet | Arabic headings, columns and strip, right to left layout |
+| TC-E-179 | Analytics | regression | NFR-11 | Analytics, reports and every persona dashboard fit a phone without sideways scrolling | Open the three pages at 390 px for all personas | No sideways scrolling |
+| TC-E-180 | Analytics | negative | FR-64 | Switching persona on a page never leaves another persona's report or widgets behind | Pick an operator report, switch to customer, open Analytics | The customer lands on its own report and sees no service desk or corridor widgets |
