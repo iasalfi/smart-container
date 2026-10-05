@@ -1,0 +1,24 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.mulberry32 = mulberry32;
+exports.pick = pick;
+exports.range = range;
+/** Small deterministic random number generator so the synthetic fleet is identical on every load. */
+function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+        a = (a + 0x6d2b79f5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+function pick(rnd, items) {
+    if (items.length === 0)
+        throw new Error("pick: empty list");
+    return items[Math.floor(rnd() * items.length)];
+}
+function range(rnd, min, max) {
+    return min + rnd() * (max - min);
+}

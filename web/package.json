@@ -1,0 +1,25 @@
+{
+  "name": "smart-container-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web UI for the Smart Container Monitoring demo. Static export; reads all data from the API service.",
+  "scripts": {
+    "vendor": "node ../scripts/vendor-domain.mjs web",
+    "predev": "npm run vendor",
+    "dev": "next dev",
+    "prebuild": "npm run vendor",
+    "build": "next build"
+  },
+  "dependencies": {
+    "next": "^16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": { "node": ">=20" }
+}
