@@ -63,7 +63,7 @@ function Detail({ c, s }: { c: Container; s: Sample[] }) {
       </Card>
       <div className="grid-2">
         <LineChart title={t("chart_temp")} values={s.map((x) => x.tempC)} minAgo={s.map((x) => x.minAgo)} band={[prof.tMin, prof.tMax]} unit="°C" bandLabel={t("band", { min: prof.tMin, max: prof.tMax })} />
-        <LineChart title={t("chart_rh")} values={s.map((x) => x.rh)} minAgo={s.map((x) => x.minAgo)} band={[prof.rhMin, prof.rhMax]} unit="%" color="#2F6DB5" bandLabel={t("band", { min: prof.rhMin, max: prof.rhMax })} />
+        <LineChart title={t("chart_rh")} values={s.map((x) => x.rh)} minAgo={s.map((x) => x.minAgo)} band={[prof.rhMin, prof.rhMax]} unit="%" color="#3d7a78" bandLabel={t("band", { min: prof.rhMin, max: prof.rhMax })} />
       </div>
     </>
   );
