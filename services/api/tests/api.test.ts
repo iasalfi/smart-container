@@ -18,7 +18,7 @@ describe("API: data endpoints (regression)", () => {
   it("TC-A-003 OpenAPI document describes every route", () => {
     const doc = body(get("/api/v1/openapi"));
     expect(doc.openapi).toMatch(/^3\./);
-    expect(Object.keys(doc.paths).sort()).toEqual(["/api/v1/alerts", "/api/v1/containers/{id}", "/api/v1/containers/{id}/series", "/api/v1/fleet", "/api/v1/health", "/api/v1/profiles"]);
+    expect(Object.keys(doc.paths).sort()).toEqual(["/api/v1/alerts", "/api/v1/containers/{id}", "/api/v1/containers/{id}/series", "/api/v1/drivers", "/api/v1/fleet", "/api/v1/health", "/api/v1/partners", "/api/v1/profiles"]);
   });
   it("TC-A-004 profiles lists the 7 cargo profiles", () => { expect(body(get("/api/v1/profiles")).profiles).toHaveLength(7); });
   it("TC-A-005 fleet returns 1,000 containers with 912 / 61 / 27 and 12 offline", () => {
@@ -185,5 +185,51 @@ describe("API: over a real HTTP socket", () => {
     const r = await fetch(`${base}/api/v1/containers/%E0%A4%A`);
     expect(r.status).toBe(400);
     expect((await fetch(`${base}/api/v1/health`)).status).toBe(200);
+  });
+});
+
+describe("API: partners and drivers", () => {
+  it("TC-A-053 partners lists the 8 freight companies with a scorecard each", () => {
+    const b = body(get("/api/v1/partners"));
+    expect(b.total).toBe(8);
+    expect(b.partners).toHaveLength(8);
+    expect(b.partners[0]).toMatchObject({ id: "FP-01", status: expect.any(String) });
+    expect(b.partners.every((p: any) => p.scorecard && p.scorecard.score >= 0 && p.scorecard.score <= 100 && "ABCD".includes(p.scorecard.grade))).toBe(true);
+    expect(b.partners.reduce((s: number, p: any) => s + (p.scorecard?.containers ?? 0), 0)).toBe(1000);
+  });
+  it("TC-A-054 partners can be filtered by status", () => {
+    const b = body(get("/api/v1/partners", { status: "probation" }));
+    expect(b.total).toBeGreaterThanOrEqual(1);
+    expect(b.partners.every((p: any) => p.status === "probation")).toBe(true);
+  });
+  it("TC-A-055 an unknown partner status returns 400 with an error code @negative", () => {
+    const r = get("/api/v1/partners", { status: "gold" });
+    expect(r.status).toBe(400);
+    expect(body(r).error.code).toBe("invalid_partner_status");
+  });
+  it("TC-A-056 drivers lists 320 drivers with paging", () => {
+    const all = body(get("/api/v1/drivers"));
+    expect(all.total).toBe(320);
+    const page = body(get("/api/v1/drivers", { limit: "10", offset: "5" }));
+    expect(page.drivers).toHaveLength(10);
+    expect(page.drivers[0].id).toBe(all.drivers[5].id);
+    expect(page.total).toBe(320);
+  });
+  it("TC-A-057 drivers can be filtered by partner and by risk band", () => {
+    const mine = body(get("/api/v1/drivers", { partner: "FP-02" }));
+    expect(mine.total).toBe(40);
+    expect(mine.drivers.every((d: any) => d.partnerId === "FP-02")).toBe(true);
+    const high = body(get("/api/v1/drivers", { risk: "high" }));
+    expect(high.drivers.every((d: any) => d.scorecard.band === "high" && d.scorecard.score < 60)).toBe(true);
+    const good = body(get("/api/v1/drivers", { risk: "good" }));
+    expect(good.drivers.every((d: any) => d.scorecard.score >= 80)).toBe(true);
+  });
+  it("TC-A-058 bad driver filters return 400 with an error code @negative", () => {
+    expect(body(get("/api/v1/drivers", { partner: "FP-99" })).error.code).toBe("invalid_partner");
+    expect(body(get("/api/v1/drivers", { risk: "severe" })).error.code).toBe("invalid_risk");
+    expect(body(get("/api/v1/drivers", { limit: "0" })).error.code).toBe("invalid_limit");
+    expect(body(get("/api/v1/drivers", { limit: "abc" })).error.code).toBe("invalid_limit");
+    expect(body(get("/api/v1/drivers", { offset: "-1" })).error.code).toBe("invalid_offset");
+    expect(get("/api/v1/drivers", {}, "POST").status).toBe(405);
   });
 });
