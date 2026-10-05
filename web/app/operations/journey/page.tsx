@@ -53,7 +53,10 @@ function Detail({ j, live }: { j: Journey; live: boolean }) {
           <h1 data-testid="journey-title">{j.id}</h1>
           <p className="muted">{city(j.input.originId)} → {city(j.input.destinationId)} · {j.customer}</p>
         </div>
-        <span className={`pill pjs-${status}`} data-testid="journey-status">{t(`ops_status_${status}` as const)}</span>
+        <div className="live-actions">
+          {j.source === "fleet" ? <Link className="btn-sm" href={`/live/?id=${encodeURIComponent(j.containerId)}`} data-testid="track-live">{t("lv_track_link")}</Link> : null}
+          <span className={`pill pjs-${status}`} data-testid="journey-status">{t(`ops_status_${status}` as const)}</span>
+        </div>
       </div>
 
       <section className="ops-kpis" aria-label={t("ops_summary")}>
