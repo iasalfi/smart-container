@@ -1,4 +1,6 @@
 import type { Lang } from "./types";
+import { arItsm, enItsm } from "./i18n-itsm";
+import { arOps, enOps } from "./i18n-ops";
 
 export const en = {
   app_name: "Smart Container Monitoring",
@@ -109,7 +111,7 @@ export const en = {
   escalated: "Escalated to supervisor",
   escalates_in: "Escalates in {m} min",
   minutes_ago: "{m} min ago",
-  alerts_title: "Alerts centre",
+  alerts_title: "Alert and alarm management",
   alerts_count: "{n} alerts",
   filter_severity: "Severity",
   filter_state: "State",
@@ -263,6 +265,8 @@ export const en = {
   alerts_sum_critical: "Critical",
   alerts_sum_warning: "Warning",
   alerts_sum_done: "Handled",
+  ...enItsm,
+  ...enOps,
 } as const;
 
 export type Key = keyof typeof en;
@@ -376,7 +380,7 @@ export const ar: Record<Key, string> = {
   escalated: "تم التصعيد إلى المشرف",
   escalates_in: "التصعيد خلال {m} دقيقة",
   minutes_ago: "قبل {m} دقيقة",
-  alerts_title: "مركز التنبيهات",
+  alerts_title: "إدارة التنبيهات والإنذارات",
   alerts_count: "{n} تنبيه",
   filter_severity: "الخطورة",
   filter_state: "الحالة",
@@ -530,6 +534,8 @@ export const ar: Record<Key, string> = {
   alerts_sum_critical: "حرجة",
   alerts_sum_warning: "تحذيرية",
   alerts_sum_done: "تمت معالجتها",
+  ...arItsm,
+  ...arOps,
 };
 
 export const dictionaries: Record<Lang, Record<Key, string>> = { en: en as unknown as Record<Key, string>, ar };
