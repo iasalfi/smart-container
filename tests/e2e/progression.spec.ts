@@ -2,12 +2,17 @@ import { test, expect } from "@playwright/test";
 import { openFleet, openView, setLang, setPersona, num } from "./helpers";
 
 test.describe("Progression: new behaviour and state changes", () => {
-  test("TC-E-030 Acknowledge then close moves an alert through its lifecycle @progression", async ({ page }) => {
+  test("TC-E-030 An alert moves through acknowledge, in progress, resolved and closed @progression", async ({ page }) => {
     await page.goto("/alerts/");
     const row = page.getByTestId("alert-row").first();
     await expect(row.getByTestId("alert-state")).toHaveText("Open");
     await row.getByTestId("ack-btn").click();
     await expect(row.getByTestId("alert-state")).toHaveText("Acknowledged");
+    await row.getByTestId("manage-btn").click();
+    await row.getByTestId("start-btn").click();
+    await expect(row.getByTestId("alert-state")).toHaveText("In progress");
+    await row.getByTestId("resolve-btn").click();
+    await expect(row.getByTestId("alert-state")).toHaveText("Resolved");
     await row.getByTestId("close-btn").click();
     await expect(row.getByTestId("alert-state")).toHaveText("Closed");
   });
