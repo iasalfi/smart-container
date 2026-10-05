@@ -148,7 +148,7 @@ export default function FleetPage() {
         {filtered.length === 0 ? (
           <p className="state-inline" role="status" data-testid="empty-state">{t("no_results")} <button type="button" className="link" onClick={clear}>{t("clear_filters")}</button></p>
         ) : (
-          <div className="table-wrap"><table className="table" data-testid="fleet-table">
+          <div className="table-wrap" tabIndex={0} role="region" aria-label="Fleet table"><table className="table" data-testid="fleet-table">
             <thead><tr>{th("id", "ID")}{th("cargo", t("cargo"))}{th("route", t("route"))}{th("temp", t("temp"))}{th("health", t("health_score"))}<th><span className="sr-only">{t("kpi_total")}</span></th></tr></thead>
             <tbody>
               {sorted.slice(0, limit).map((c) => (
