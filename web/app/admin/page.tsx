@@ -5,11 +5,15 @@ import { ApiGate, NotFoundState } from "@/components/ui";
 import { DEFAULT_THRESHOLDS, type Thresholds } from "@/lib/alerts";
 import { PROFILES } from "@/lib/profiles";
 import Link from "next/link";
+import { PeopleManager } from "@/components/PeopleManager";
+import { DEVICE_LIMITS, deviceIssues } from "@/lib/cases";
 
 const FIELDS = Object.keys(DEFAULT_THRESHOLDS) as (keyof Thresholds)[];
 
 export default function AdminPage() {
-  const { t, lang, persona, thresholds, setThresholds, alerts, fleet, alertsReady, apiError, retry } = useApp();
+  const { t, lang, persona, thresholds, setThresholds, alerts, fleet, alertsReady, apiError, retry, deviceLimits, setDeviceLimits } = useApp();
+  const [lim, setLim] = useState({ b: String(deviceLimits.batteryPct), o: String(deviceLimits.offlineMin), w: String(deviceLimits.weakSignalBatteryPct) });
+  const [limMsg, setLimMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>(() => Object.fromEntries(FIELDS.map((k) => [k, String(thresholds[k])])));
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const lowBattery = useMemo(() => [...(fleet ?? [])].sort((a, b) => a.batteryPct - b.batteryPct).slice(0, 15), [fleet]);
@@ -26,6 +30,15 @@ export default function AdminPage() {
     setThresholds(next as Thresholds);
     setMsg({ ok: true, text: t("saved", { n: "…" }) });
   };
+  const saveLimits = () => {
+    const b = Number(lim.b), o = Number(lim.o), w = Number(lim.w);
+    const whole = (n: number, lo: number, hi: number) => Number.isInteger(n) && n >= lo && n <= hi;
+    if (!whole(b, 1, 100) || !whole(w, 1, 100) || !whole(o, 1, 1440)) { setLimMsg({ ok: false, text: t("mt_lim_invalid") }); return; }
+    const next = { ...deviceLimits, batteryPct: b, offlineMin: o, weakSignalBatteryPct: w };
+    setDeviceLimits(next);
+    setLimMsg({ ok: true, text: t("mt_lim_saved", { n: deviceIssues(fleet, next).length }) });
+  };
+  const resetLimits = () => { setLim({ b: String(DEVICE_LIMITS.batteryPct), o: String(DEVICE_LIMITS.offlineMin), w: String(DEVICE_LIMITS.weakSignalBatteryPct) }); setDeviceLimits({ ...DEVICE_LIMITS }); setLimMsg(null); };
   const reset = () => { setDraft(Object.fromEntries(FIELDS.map((k) => [k, String(DEFAULT_THRESHOLDS[k])]))); setThresholds({ ...DEFAULT_THRESHOLDS }); setMsg(null); };
   return (
     <div className="page">
@@ -45,6 +58,25 @@ export default function AdminPage() {
         </form>
         {msg ? <p className={msg.ok ? "ok-msg" : "error"} role={msg.ok ? "status" : "alert"} data-testid="threshold-msg">{msg.ok ? t("saved", { n: alerts.length }) : msg.text}</p> : null}
         <p className="muted small" data-testid="alert-total">{t("alerts_count", { n: alerts.length })}</p>
+      </section>
+      <section className="card" data-testid="device-limits">
+        <h2>{t("mt_lim_title")}</h2>
+        <p className="muted small">{t("mt_lim_hint")}</p>
+        <form className="form" onSubmit={(e) => { e.preventDefault(); saveLimits(); }} noValidate>
+          <label>{t("mt_lim_battery")}<input inputMode="numeric" value={lim.b} onChange={(e) => setLim({ ...lim, b: e.target.value })} data-testid="lim-battery" /></label>
+          <label>{t("mt_lim_offline")}<input inputMode="numeric" value={lim.o} onChange={(e) => setLim({ ...lim, o: e.target.value })} data-testid="lim-offline" /></label>
+          <label>{t("mt_lim_signal")}<input inputMode="numeric" value={lim.w} onChange={(e) => setLim({ ...lim, w: e.target.value })} data-testid="lim-signal" /></label>
+          <div className="row">
+            <button type="submit" className="btn" data-testid="lim-save" disabled={persona !== "operator"}>{t("mt_lim_save")}</button>
+            <button type="button" className="btn ghost" onClick={resetLimits} data-testid="lim-reset" disabled={persona !== "operator"}>{t("mt_lim_reset")}</button>
+          </div>
+        </form>
+        {limMsg ? <p className={limMsg.ok ? "ok-msg" : "error"} role={limMsg.ok ? "status" : "alert"} data-testid="lim-msg">{limMsg.text}</p> : null}
+      </section>
+      <section className="card" data-testid="admin-registry">
+        <h2>{t("pp_admin_title")}</h2>
+        <p className="muted small">{t("pp_admin_sub")}</p>
+        <PeopleManager admin />
       </section>
       <section className="card">
         <h2>{t("admin_profiles")}</h2>
