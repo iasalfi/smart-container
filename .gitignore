@@ -21,4 +21,6 @@ web/lib/rng.ts
 web/lib/route.ts
 web/lib/series.ts
 web/lib/types.ts
+web/lib/itsm.ts
+web/lib/journey.ts
 services/api/public
