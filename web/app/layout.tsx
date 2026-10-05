@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Header } from "@/components/Header";
+import { Header, Sidebar } from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "Smart Container Monitoring demo",
@@ -14,8 +14,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" dir="ltr">
       <body>
         <Providers>
-          <Header />
-          <main id="main" tabIndex={-1}>{children}</main>
+          <div className="shell">
+            <Sidebar />
+            <div className="content">
+              <Header />
+              <main id="main" tabIndex={-1}>{children}</main>
+            </div>
+          </div>
         </Providers>
       </body>
     </html>
