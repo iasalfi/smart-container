@@ -9,6 +9,8 @@ import { excursionC } from "@/lib/health";
 import { getRoute, routeLengthKm } from "@/lib/geo";
 import { etaMinutes } from "@/lib/route";
 import { CITIES } from "@/lib/cities";
+import { Lifecycle } from "@/components/Lifecycle";
+import { driverIdFor } from "@/lib/people";
 
 export default function Page() {
   return (
@@ -20,7 +22,9 @@ export default function Page() {
 
 import type { Container, Sample } from "@/lib/types";
 function Detail({ c, s }: { c: Container; s: Sample[] }) {
-  const { t, lang, alerts, lockOverride } = useApp();
+  const { t, lang, alerts, lockOverride, registry } = useApp();
+  const drv = registry.drivers.find((d) => d.id === driverIdFor(registry, c));
+  const partner = registry.partners.find((p) => p.id === (drv?.partnerId ?? c.partnerId));
   const prof = getProfile(c.profileId)!;
   const route = getRoute(c.routeId)!;
   const inBand = excursionC(c.tempC, prof) === 0;
@@ -32,13 +36,15 @@ function Detail({ c, s }: { c: Container; s: Sample[] }) {
   );
   return (
     <>
+      <Lifecycle c={c} />
       <div className="grid-2">
         <Card title={t("cargo_card")} testid="cargo-card">
           <dl className="dl">
             <dt>{t("cargo")}</dt><dd>{prof.name[lang]}</dd>
             <dt>{t("customer")}</dt><dd>{c.customer}</dd>
             <dt>{t("route")}</dt><dd>{CITIES[route.from][lang]} → {CITIES[route.to][lang]}</dd>
-            <dt>{t("driver")}</dt><dd>{c.driver}</dd>
+            <dt>{t("driver")}</dt><dd data-testid="detail-driver">{drv?.name ?? c.driver}</dd>
+            <dt>{t("pp_carrier")}</dt><dd data-testid="detail-partner">{partner?.name ?? "–"}</dd>
             <dt>{t("plate")}</dt><dd>{c.plate}</dd>
             <dt>{t("eta")}</dt><dd data-testid="eta">{t("eta_value", { h: Math.floor(eta / 60), m: eta % 60 })}</dd>
           </dl>
