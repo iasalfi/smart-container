@@ -6,7 +6,7 @@ const manage = async (page: Page, row = firstRow(page)) => { await row.getByTest
 
 test.describe("Alert and alarm management (ITSM)", () => {
   test("TC-E-129 The service level strip shows breaches, risk, unassigned, major incidents and mean times @regression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     for (const k of ["breached", "at-risk", "unassigned", "major", "mtta", "mttr"]) await expect(page.getByTestId(`itsm-${k}`)).toBeVisible();
     await expect(page.getByTestId("itsm-unassigned")).toContainText("102");
     await expect(page.getByTestId("itsm-major")).toContainText("0");
@@ -16,7 +16,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-130 The priority matrix counts every open alert once and a cell filters the queue @regression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const cells = page.getByTestId("matrix-cell");
     await expect(cells).toHaveCount(9);
     let total = 0;
@@ -32,7 +32,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-131 Every alert shows a priority badge, response and resolution clocks, a tier and an owner @regression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = firstRow(page);
     await expect(row.getByTestId("prio")).toHaveText("P1");
     await expect(row.getByTestId("sla-response")).toContainText("Respond:");
@@ -46,7 +46,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-132 Acknowledging stops the response clock and keeps the resolution clock running @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = firstRow(page);
     await expect(row.getByTestId("sla-response")).toContainText("breached");
     await row.getByTestId("ack-btn").click();
@@ -55,7 +55,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-133 A ticket goes through acknowledge, start, resolve with a code and close, and the timeline records each step @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = firstRow(page);
     await row.getByTestId("ack-btn").click();
     await manage(page, row);
@@ -73,7 +73,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-134 Assigning an owner moves the ticket from Unassigned into My queue @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await expect(page.getByTestId("queue-unassigned")).toContainText("102");
     await manage(page);
     await firstRow(page).getByTestId("owner-select").selectOption("me");
@@ -85,7 +85,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-135 Escalating lifts the tier and declaring a major incident moves the ticket to the duty manager @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = page.locator('[data-testid="alert-row"][data-priority="4"]').first();
     await expect(row.getByTestId("tier")).toHaveText("L1");
     await manage(page, row);
@@ -101,7 +101,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-136 A note added to a ticket appears in its timeline @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = firstRow(page);
     await manage(page, row);
     await row.getByTestId("note-input").fill("Driver called, truck is at the depot");
@@ -111,7 +111,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-137 Recurring alerts become problem candidates and raising one links the alerts to a problem record @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const cands = page.getByTestId("problem-candidate");
     await expect(cands.first()).toBeVisible();
     const before = await cands.count();
@@ -128,7 +128,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-138 Resolve and Close stay disabled until the earlier steps are done @negative", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = firstRow(page);
     await manage(page, row);
     await expect(row.getByTestId("close-btn")).toBeDisabled();
@@ -141,7 +141,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-139 A blank note cannot be added @negative", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = firstRow(page);
     await manage(page, row);
     await expect(row.getByTestId("note-btn")).toBeDisabled();
@@ -151,7 +151,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-140 The customer view has no service desk panels and no action buttons @negative", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await setPersona(page, "customer");
     await expect(page.getByTestId("alerts-summary")).toBeVisible();
     await expect(page.getByTestId("itsm-kpis")).toHaveCount(0);
@@ -162,7 +162,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-141 The lifecycle and tier tiles count the tickets and filter the list @regression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await expect(page.getByTestId("flow-open")).toContainText("102");
     for (const s of ["acknowledged", "in_progress", "resolved", "closed"]) await expect(page.getByTestId(`flow-${s}`)).toContainText("0");
     const n = Number((await page.getByTestId("tier-3").locator("i").innerText()).trim());
@@ -177,7 +177,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-142 Owner, notes and state survive a reload @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const id = (await firstRow(page).innerText()).match(/SC-\d{4}/)![0];
     await manage(page);
     await firstRow(page).getByTestId("owner-select").selectOption("l2-a");
@@ -192,13 +192,13 @@ test.describe("Alert and alarm management (ITSM)", () => {
   });
 
   test("TC-E-143 The alert and alarm page with an open ticket has no serious accessibility violations @regression @a11y", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await manage(page);
     expect(await axeSerious(page)).toEqual([]);
   });
 
   test("TC-E-144 The alert and alarm page works in Arabic with the service level strip and queues @regression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await setLang(page, "ar");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("إدارة التنبيهات والإنذارات");
     await expect(page.getByTestId("itsm-kpis")).toContainText("غير مسندة");
@@ -209,7 +209,7 @@ test.describe("Alert and alarm management (ITSM)", () => {
 
   test("TC-E-145 The alert and alarm page fits a phone without sideways scrolling @regression @ux", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await expect(firstRow(page)).toBeVisible();
     await manage(page);
     const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
