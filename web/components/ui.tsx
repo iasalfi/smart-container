@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useApp } from "@/app/providers";
 import type { Container, Status } from "@/lib/types";
+import { ContainerIcon } from "./Art";
 
 export const STATUS_COLOR: Record<Status, string> = { normal: "#3BA55D", warning: "#F2A541", critical: "#D64545" };
 
@@ -70,6 +71,7 @@ export function ContainerHead({ c }: { c: Container }) {
   const { t } = useApp();
   return (
     <div className="chead">
+      <ContainerIcon status={c.status} reefer={c.reefer} size={72} led />
       <div>
         <h1 data-testid="container-title">{c.id}</h1>
         <p className="muted">{c.origin} → {c.destination} · {c.tripId}</p>
