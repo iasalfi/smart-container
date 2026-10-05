@@ -1,9 +1,11 @@
 import { mulberry32, pick, range } from "./rng";
 import { CITIES, ROUTES } from "./cities";
 import { corridorPoint, getRoute } from "./geo";
-import { computeHealth } from "./health";
+import { computeHealth, excursionC } from "./health";
 import { getProfile, PROFILES } from "./profiles";
-import { buildSeries, type SeriesParams } from "./series";
+import { buildSeries, STEP_MIN, type SeriesParams } from "./series";
+import { mulberry32 as seededRng } from "./rng";
+import { partnerReliability, seedRegistry } from "./partners";
 import { evaluateAlerts, toAlerts, DEFAULT_THRESHOLDS, type Thresholds } from "./alerts";
 import type { Alert, Container, Sample } from "./types";
 
@@ -84,11 +86,41 @@ export function generateFleet(): Container[] {
       tempC: last.tempC, rh: last.rh, setpointC: prof.reefer ? Math.round(((prof.tMin + prof.tMax) / 2) * 10) / 10 : null,
       door: last.door, lock: padlock ? (sc === "door" ? "unlocked" : "locked") : "none", padlock,
       gas: gas && last.nh3 !== null && last.h2s !== null ? { nh3: last.nh3, h2s: last.h2s } : null,
+      driverId: "", partnerId: "", outOfBandMin: samples.filter((x) => excursionC(x.tempC, prof) > 0).length * STEP_MIN,
       batteryPct: Math.round(range(rnd, 22, 100)), signal: isOffline ? 0 : 1 + Math.floor(rnd() * 5),
       healthScore: health.score, scenario: sc, lastSeenMin: isOffline ? Math.round(range(rnd, 25, 90)) : Math.floor(rnd() * 5),
     });
   }
+  assignDrivers(list);
   return list;
+}
+
+/**
+ * Gives every container a driver and a freight partner from the seeded registry.
+ * It uses its own random stream so the rest of the fleet is unchanged. Containers with a problem lean toward the
+ * weaker partners and the drivers with more logged events, so the scorecards have something real to compare.
+ */
+function assignDrivers(list: Container[]): void {
+  const reg = seedRegistry();
+  const rnd = seededRng(9157);
+  const eventCount = new Map<string, number>();
+  for (const e of reg.events) eventCount.set(e.driverId, (eventCount.get(e.driverId) ?? 0) + 1);
+  const pool = reg.partners.map((p, i) => ({ p, rel: partnerReliability(i), drivers: reg.drivers.filter((d) => d.partnerId === p.id && d.status === "active") }));
+  const weighted = <T,>(items: T[], w: (t: T) => number): T => {
+    const total = items.reduce((s, x) => s + w(x), 0);
+    let x = rnd() * total;
+    for (const it of items) { x -= w(it); if (x <= 0) return it; }
+    return items[items.length - 1];
+  };
+  for (const c of list) {
+    const bad = c.scenario !== "none";
+    const slot = weighted(pool, (q) => q.p.trucks * (bad ? (1.9 - q.rel) ** 4 : 0.5 + q.rel));
+    const able = slot.drivers.filter((d) => !c.reefer || d.coldChain);
+    const d = weighted(able, (x) => (bad ? 1 + 2 * (eventCount.get(x.id) ?? 0) : 1));
+    c.driverId = d.id;
+    c.partnerId = slot.p.id;
+    c.driver = d.name;
+  }
 }
 
 export function getFleet(): Container[] {
