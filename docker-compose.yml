@@ -1,0 +1,17 @@
+# Runs both services locally:  docker compose up --build
+# Web: http://localhost:8080   API: http://localhost:4100/api/v1/health
+services:
+  api:
+    build: { context: ., dockerfile: services/api/Dockerfile }
+    ports: ["4100:4100"]
+    environment:
+      CORS_ORIGIN: "*"
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      args: { NEXT_PUBLIC_API_URL: "http://localhost:4100" }
+    ports: ["8080:80"]
+    depends_on: [api]
+    restart: unless-stopped

@@ -1,0 +1,52 @@
+{
+  "name": "smart-container-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart Container Monitoring demo: an API service and a web UI, deployed independently. All data is synthetic.",
+  "scripts": {
+    "vendor": "node scripts/vendor-domain.mjs api && node scripts/vendor-domain.mjs web",
+    "dev:api": "npm run vendor && tsx watch services/api/src/server.ts",
+    "dev:web": "npm run vendor && NEXT_PUBLIC_API_URL=http://localhost:4100 npm --prefix web run dev",
+    "build:api": "npm --prefix services/api run build",
+    "build:web": "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:4100} npm --prefix web run build",
+    "build": "npm run build:api && npm run build:web",
+    "start:api": "PORT=4100 tsx services/api/src/server.ts",
+    "start:web": "serve web/out -l 3100 --no-clipboard",
+    "lint": "eslint .",
+    "typecheck": "npm run vendor && tsc -p packages/domain && tsc -p services/api && tsc -p web",
+    "test:unit": "vitest run",
+    "test:bank": "node scripts/check-bank.mjs",
+    "test:e2e": "playwright test",
+    "test:regression": "playwright test --grep @regression",
+    "test:progression": "playwright test --grep @progression",
+    "test:negative": "playwright test --grep @negative",
+    "test:a11y": "playwright test --grep @a11y",
+    "test:smoke": "playwright test --config playwright.smoke.config.ts",
+    "test": "npm run test:bank && npm run test:unit && npm run test:e2e",
+    "geo": "node packages/domain/build-geo.mjs"
+  },
+  "dependencies": {
+    "next": "^16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "d3-geo": "^3.1.1",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.3.8",
+    "serve": "^14.2.4",
+    "topojson-client": "^3.1.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.0",
+    "vitest": "^5.0.3",
+    "world-atlas": "^2.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,24 @@
+node_modules
+.next
+out
+dist
+.vercel
+playwright-report
+test-results
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
+# generated copies of packages/domain (see scripts/vendor-domain.mjs)
+services/api/src/domain/
+web/lib/alerts.ts
+web/lib/cities.ts
+web/lib/filter.ts
+web/lib/geo-data.ts
+web/lib/geo.ts
+web/lib/health.ts
+web/lib/profiles.ts
+web/lib/rng.ts
+web/lib/route.ts
+web/lib/series.ts
+web/lib/types.ts
+services/api/public
