@@ -18,10 +18,10 @@ function RouteView({ c, s }: { c: Container; s: Sample[] }) {
   const dev = deviationKm(s, route);
   const eta = etaMinutes(c.progress, routeLengthKm(route));
   const paths: PathLine[] = [
-    { d: corridorPath(route), color: "#7F95AA", width: 3, dashed: true, label: t("planned") },
-    { d: actualPath(s), color: "#0B2545", width: 3.4, label: t("actual") },
+    { d: corridorPath(route), color: "#a29a86", width: 3, dashed: true, label: t("planned") },
+    { d: actualPath(s), color: "#2f4f46", width: 3.4, label: t("actual") },
   ];
-  const pins: Pin[] = stops.map((st, i) => ({ id: `stop-${i}`, lon: st.lon, lat: st.lat, color: st.scheduled ? "#3BA55D" : "#D64545", label: `${st.scheduled ? t("stop_scheduled") : t("stop_unscheduled")} · ${t("minutes_short", { m: st.durationMin })}` }));
+  const pins: Pin[] = stops.map((st, i) => ({ id: `stop-${i}`, lon: st.lon, lat: st.lat, color: st.scheduled ? "#6fa585" : "#c9695d", label: `${st.scheduled ? t("stop_scheduled") : t("stop_unscheduled")} · ${t("minutes_short", { m: st.durationMin })}` }));
   return (
     <>
       <div className="grid-main">
