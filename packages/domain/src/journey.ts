@@ -400,6 +400,17 @@ export function seedJourneys(fleet: Pick<Container, "id" | "routeId" | "online" 
     let j = build(done, out.length, Date.UTC(2026, 9, 4, 5, 0));
     while (nextMilestone(j)) j = completeNext(j, 0);
     out.push(j);
+    used.add(done.id);
   }
+  // Every other container in the fleet is on the road, so each one gets the journey it is travelling now.
+  fleet.forEach((c, i) => {
+    if (used.has(c.id)) return;
+    used.add(c.id);
+    const n = out.length;
+    const probe = build(c, n, SNAPSHOT_MS);
+    const driveMs = (probe.plan.arriveMs - probe.plan.departMs) * c.progress;
+    const delay = !c.online ? 60 : i % 17 === 5 ? 35 + (i % 25) : (i % 7) * 2;
+    out.push(advanceTo(build(c, n, round5(SNAPSHOT_MS - driveMs)), c.progress, delay));
+  });
   return out;
 }
