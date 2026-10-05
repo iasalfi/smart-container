@@ -28,17 +28,19 @@ describe("analytics and reports", () => {
     expect(alertsIn(alerts, mine).every((a) => mine.some((c) => c.id === a.containerId))).toBe(true);
   });
 
-  it("TC-U-118 each persona gets its own four KPIs and widget set", () => {
+  it("TC-U-118 each persona gets its own KPIs, plus the carrier and driver scores every persona shares", () => {
     const ids = new Set<string>();
     for (const p of PERSONAS) {
       const c = ctx(p);
       const a = analyticsFor(p, c.scope, c.alerts, c.journeys, {}, NOW);
-      expect(a.kpis.length).toBe(4);
+      expect(a.kpis.length).toBeGreaterThanOrEqual(6);
+      expect(a.kpis.map((k) => k.id)).toEqual(expect.arrayContaining(["x_carrier", "x_driver"]));
       expect(a.widgets).toEqual(WIDGETS[p]);
-      for (const k of a.kpis) { expect(ids.has(k.id)).toBe(false); ids.add(k.id); expect(Number.isFinite(k.value)).toBe(true); }
+      for (const k of a.kpis.filter((x) => !x.id.startsWith("x_"))) { expect(ids.has(k.id)).toBe(false); ids.add(k.id); }
+      for (const k of a.kpis) expect(Number.isFinite(k.value)).toBe(true);
     }
     const op = analyticsFor("operator", fleet, alerts, journeys, {}, NOW);
-    expect(op.kpis[0].value).toBe(journeys.filter((j) => ["in_transit", "delayed"].includes(journeyStatus(j))).length);
+    expect(op.kpis.find((k) => k.id === "o_transit")?.value).toBe(journeys.filter((j) => ["in_transit", "delayed"].includes(journeyStatus(j))).length);
   });
 
   it("TC-U-119 the analytics numbers add up to the scope they were computed for", () => {
