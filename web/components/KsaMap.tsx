@@ -65,8 +65,8 @@ export function KsaMap({ label, dots = [], paths = [], pins = [], truck, onSelec
         onPointerDown={(e) => { if (zoom > 1) drag.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y, moved: false }; void e; }}
         onPointerLeave={() => setHover(null)}>
         <rect x="0" y="0" width={VIEW.w} height={VIEW.h} fill="var(--sea)" />
-        <path d={NEIGHBOUR_PATH} fill="#efe8d8" stroke="#fff" strokeWidth={1.5 * unit} />
-        <path d={KSA_PATH} fill="#cfe0d6" stroke="#4f8f84" strokeWidth={2.2 * unit} strokeLinejoin="round" />
+        <path d={NEIGHBOUR_PATH} fill="#e9edf3" stroke="#fff" strokeWidth={1.5 * unit} />
+        <path d={KSA_PATH} fill="#dbe1fb" stroke="#5a66f1" strokeWidth={2.2 * unit} strokeLinejoin="round" />
         {paths.map((p, i) => (
           <path key={i} d={p.d} fill="none" stroke={p.color} strokeWidth={(p.width ?? 3) * unit} strokeDasharray={p.dashed ? `${8 * unit} ${6 * unit}` : undefined} strokeLinecap="round" strokeLinejoin="round">
             {p.label ? <title>{p.label}</title> : null}
@@ -76,7 +76,7 @@ export function KsaMap({ label, dots = [], paths = [], pins = [], truck, onSelec
           const p = project(cm);
           return (
             <g key={cm.id} transform={`translate(${p.x} ${p.y}) scale(${unit})`} pointerEvents="none" data-testid="map-city">
-              <rect x="-3.500" y="-3.500" width="7" height="7" rx="1.500" fill="#2f4f46" stroke="#fff" strokeWidth="1.500" />
+              <rect x="-3.500" y="-3.500" width="7" height="7" rx="1.500" fill="#2b3a55" stroke="#fff" strokeWidth="1.500" />
               <text x="7" y="3.500" className="city-lbl">{cm.name}</text>
             </g>
           );
@@ -89,7 +89,7 @@ export function KsaMap({ label, dots = [], paths = [], pins = [], truck, onSelec
           const p = project(d);
           const r = (d.r ?? 4) * unit * (d.selected ? 1.8 : 1);
           return (
-            <circle key={d.id} cx={p.x} cy={p.y} r={r} fill={d.hollow ? "#fff" : d.color} stroke={d.selected ? "#2f4f46" : d.hollow ? d.color : "#fff"} strokeWidth={(d.selected ? 2.5 : d.hollow ? 1.8 : 0.8) * unit}
+            <circle key={d.id} cx={p.x} cy={p.y} r={r} fill={d.hollow ? "#fff" : d.color} stroke={d.selected ? "#2b3a55" : d.hollow ? d.color : "#fff"} strokeWidth={(d.selected ? 2.5 : d.hollow ? 1.8 : 0.8) * unit}
               data-testid="map-dot" data-id={d.id} className="dotc"
               onClick={onSelect ? () => { if (!dragged.current) onSelect(d.id); } : undefined}
               onPointerEnter={d.tip ? (e) => { const b = wrap.current?.getBoundingClientRect(); if (b && !drag.current) setHover({ id: d.id, x: e.clientX - b.left, y: e.clientY - b.top }); } : undefined}
@@ -110,7 +110,7 @@ export function KsaMap({ label, dots = [], paths = [], pins = [], truck, onSelec
             </g>
           );
         })}
-        {truck ? (() => { const p = project(truck); return (<g transform={`translate(${p.x} ${p.y}) scale(${unit})`} data-testid="map-truck"><circle r="13" fill="#2f4f46" stroke="#fff" strokeWidth="3" /><path d="M-6 -4h8v7h-8zM2 -2h5l2 3v4h-7z" fill="#fff" /></g>); })() : null}
+        {truck ? (() => { const p = project(truck); return (<g transform={`translate(${p.x} ${p.y}) scale(${unit})`} data-testid="map-truck"><circle r="13" fill="#2b3a55" stroke="#fff" strokeWidth="3" /><path d="M-6 -4h8v7h-8zM2 -2h5l2 3v4h-7z" fill="#fff" /></g>); })() : null}
       </svg>
       {hovered && hover && hovered.tip ? (
         <div className="map-tip" role="tooltip" style={{ left: hover.x, top: hover.y }} data-testid="map-tip">
