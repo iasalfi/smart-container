@@ -8,6 +8,9 @@ import { deviationKm, etaMinutes, excursions, findStops } from "./domain/route";
 import { getRoute, routeLengthKm } from "./domain/geo";
 import { STEP_MIN } from "./domain/series";
 import type { Status } from "./domain/types";
+import { seedJourneys } from "./domain/journey";
+import { PARTNER_STATUSES, seedRegistry } from "./domain/partners";
+import { buildPeople, type People } from "./domain/people";
 import { VERSION, openapi } from "./openapi";
 
 export interface ApiRequest { method: string; path: string; query: URLSearchParams }
@@ -104,6 +107,39 @@ function alertsEndpoint(q: URLSearchParams): ApiResponse {
   return json(200, { total: list.length, thresholds: th, alerts: list });
 }
 
+let peopleMemo: People | null = null;
+function people(): People {
+  if (!peopleMemo) peopleMemo = buildPeople(seedRegistry(), getFleet(), getAlerts(), seedJourneys(getFleet()));
+  return peopleMemo;
+}
+
+function partnersEndpoint(q: URLSearchParams): ApiResponse {
+  const status = q.get("status");
+  if (status !== null && !(PARTNER_STATUSES as readonly string[]).includes(status)) return fail(400, "invalid_partner_status", "status must be active, probation or suspended.");
+  const reg = seedRegistry();
+  const rows = new Map(people().partners.map((p) => [p.id, p]));
+  const list = reg.partners.filter((p) => status === null || p.status === status).map((p) => ({ ...p, scorecard: rows.get(p.id) ?? null }));
+  return json(200, { total: list.length, partners: list });
+}
+
+const RISKS = ["high", "watch", "good"] as const;
+
+function driversEndpoint(q: URLSearchParams): ApiResponse {
+  const reg = seedRegistry();
+  const partner = q.get("partner");
+  if (partner !== null && !reg.partners.some((p) => p.id === partner)) return fail(400, "invalid_partner", `Unknown partner "${partner}".`);
+  const risk = q.get("risk");
+  if (risk !== null && !(RISKS as readonly string[]).includes(risk)) return fail(400, "invalid_risk", "risk must be high, watch or good.");
+  const limit = parseInt0(q.get("limit"), 1, reg.drivers.length);
+  const offset = parseInt0(q.get("offset"), 0, reg.drivers.length);
+  if (limit === "bad") return fail(400, "invalid_limit", `limit must be a whole number from 1 to ${reg.drivers.length}.`);
+  if (offset === "bad") return fail(400, "invalid_offset", `offset must be a whole number from 0 to ${reg.drivers.length}.`);
+  const rows = new Map(people().drivers.map((d) => [d.id, d]));
+  const matched = reg.drivers.filter((d) => (partner === null || d.partnerId === partner) && (risk === null || rows.get(d.id)?.band === risk));
+  const page = matched.slice(offset ?? 0, limit === null ? undefined : (offset ?? 0) + limit).map((d) => ({ ...d, scorecard: rows.get(d.id) ?? null }));
+  return json(200, { total: matched.length, drivers: page });
+}
+
 export function health(): ApiResponse {
   return json(200, { status: "ok", service: "smart-container-api", version: VERSION, fleetSize: FLEET_SIZE, uptimeSeconds: Math.round((Date.now() - STARTED) / 1000), stepMinutes: STEP_MIN }, false);
 }
@@ -123,6 +159,8 @@ export function handle(req: ApiRequest): ApiResponse {
   if (path === "/api/v1/profiles") return json(200, { profiles: PROFILES });
   if (path === "/api/v1/fleet") return fleetEndpoint(req.query);
   if (path === "/api/v1/alerts") return alertsEndpoint(req.query);
+  if (path === "/api/v1/partners") return partnersEndpoint(req.query);
+  if (path === "/api/v1/drivers") return driversEndpoint(req.query);
   const m = /^\/api\/v1\/containers\/([^/]+)(\/series)?$/.exec(path);
   if (m) {
     let id: string;
