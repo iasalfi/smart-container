@@ -71,22 +71,26 @@ test.describe("Analytics, reports and persona dashboards", () => {
     await expect(page.getByTestId("analytics")).toHaveAttribute("data-persona", "security");
   });
 
-  test("TC-E-172 The sidebar lists Analytics and Reports for every persona and marks the current one @regression @ux", async ({ page }) => {
+  test("TC-E-172 The sidebar lists Value for every persona, Reports sits under it, and the current page is marked @regression @ux", async ({ page }) => {
     await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Main" });
     for (const p of PERSONAS) {
       await setPersona(page, p);
-      await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Analytics" })).toBeVisible();
-      await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Reports" })).toBeVisible();
+      await expect(nav.getByRole("link", { name: "Value" })).toBeVisible();
+      await expect(nav.getByRole("link", { name: "Reports" })).toHaveCount(0);
     }
-    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Reports" }).click();
+    await setPersona(page, "operator");
+    await nav.getByRole("link", { name: "Value" }).click();
+    await expect(page).toHaveURL(/\/analytics\/$/);
+    await page.getByTestId("an-reports-link").click();
     await expect(page).toHaveURL(/\/reports\/$/);
-    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Reports" })).toHaveAttribute("aria-current", "page");
-    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Fleet" })).not.toHaveAttribute("aria-current", "page");
+    await expect(nav.getByRole("link", { name: "Value" })).toHaveAttribute("aria-current", "page");
+    await expect(nav.getByRole("link", { name: "Control tower" })).not.toHaveAttribute("aria-current", "page");
   });
 
   test("TC-E-173 Each persona gets its own report catalogue and the report body follows the pick @regression", async ({ page }) => {
     await page.goto("/reports/");
-    const cat: Record<P, string[]> = { operator: ["daily_ops", "journey_otp", "cold_chain", "sla_perf"], quality: ["cold_chain", "health_watch"], security: ["security_incidents", "sla_perf"], customer: ["shipment_status", "journey_otp"] };
+    const cat: Record<P, string[]> = { operator: ["daily_ops", "journey_otp", "cold_chain", "sla_perf", "partner_scorecard", "driver_scorecard"], quality: ["cold_chain", "health_watch", "partner_scorecard"], security: ["security_incidents", "sla_perf", "driver_scorecard"], customer: ["shipment_status", "journey_otp", "partner_scorecard"] };
     for (const p of PERSONAS) {
       await setPersona(page, p);
       await expect(page.getByTestId("reports")).toHaveAttribute("data-persona", p);
