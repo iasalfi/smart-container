@@ -1,5 +1,8 @@
 "use client";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { CasesView } from "@/components/CasesView";
 import { useApp, CUSTOMER_PERSONA_NAME } from "../providers";
 import { AlertRow } from "@/components/AlertRow";
 import { ApiGate } from "@/components/ui";
@@ -16,7 +19,12 @@ const QUEUES: Queue[] = ["all", "mine", "unassigned", "sla", "major"];
 const LEVELS = ["high", "medium", "low"] as const;
 
 export default function AlertsPage() {
-  const { t, lang, alerts, persona, fleet, alertsReady, apiError, retry, tickets, problems, raiseProblem, updateProblem } = useApp();
+  return (<Suspense fallback={null}><AlertsInner /></Suspense>);
+}
+
+function AlertsInner() {
+  const params = useSearchParams();
+  const { t, lang, alerts, cases, persona, fleet, alertsReady, apiError, retry, tickets, problems, raiseProblem, updateProblem } = useApp();
   const byId = useMemo(() => new Map((fleet ?? []).map((c) => [c.id, c])), [fleet]);
   const [sev, setSev] = useState<Severity | "all">("all");
   const [st, setSt] = useState<AlertState | "all">("all");
@@ -26,6 +34,7 @@ export default function AlertsPage() {
   const [q, setQ] = useState("");
   const [cause, setCause] = useState<Record<string, string>>({});
   const customer = persona === "customer";
+  const view: "cases" | "alarms" = !customer && params.get("view") !== "alarms" ? "cases" : "alarms";
 
   const mine = useMemo(() => alerts.filter((a) => !customer || byId.get(a.containerId)?.customer === CUSTOMER_PERSONA_NAME), [alerts, customer, byId]);
   const views = useMemo(() => mine.map((a) => ticketView(a, byId.get(a.containerId)?.profileId ?? "dry", tickets[a.id])).sort(queueOrder), [mine, byId, tickets]);
@@ -69,9 +78,23 @@ export default function AlertsPage() {
   const mm = (m: number | null) => (m === null ? "–" : formatMinutes(m));
   const prioOf = (i: number, j: number) => [[1, 2, 3], [2, 3, 4], [3, 4, 4]][i][j] as Priority;
 
+  const toggle = !customer ? (
+    <nav className="seg" aria-label={t("cs_view_label")} data-testid="alerts-view">
+      <Link className="btn-sm" href="/alerts/" aria-current={view === "cases" ? "page" : undefined} data-testid="view-cases">{t("cs_view_cases")}</Link>
+      <Link className="btn-sm" href="/alerts/?view=alarms" aria-current={view === "alarms" ? "page" : undefined} data-testid="view-alarms">{t("cs_view_alarms")}</Link>
+    </nav>
+  ) : null;
+  if (view === "cases") {
+    return (
+      <div className="page" data-testid="cases-page">
+        <div className="page-head"><div><h1>{t("nav_alerts")}</h1><p className="muted">{t("cs_sub", { n: cases.filter((c) => c.state !== "resolved").length })}</p></div>{toggle}</div>
+        <CasesView />
+      </div>
+    );
+  }
   return (
     <div className="page">
-      <div className="page-head"><div><h1>{t("alerts_title")}</h1><p className="muted" data-testid="alerts-count" aria-live="polite">{t("alerts_count", { n: list.length })}</p></div></div>
+      <div className="page-head"><div><h1>{t("alerts_title")}</h1><p className="muted" data-testid="alerts-count" aria-live="polite">{t("alerts_count", { n: list.length })}</p></div>{toggle}</div>
       <div className="sumrow" data-testid="alerts-summary">
         <div className="sum"><b>{summary.open}</b><span>{t("alerts_sum_open")}</span></div>
         <div className="sum c"><b>{summary.critical}</b><span>{t("alerts_sum_critical")}</span></div>
