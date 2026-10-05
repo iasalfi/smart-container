@@ -44,6 +44,25 @@ export const openapi = {
         responses: { "200": { description: "Alerts, critical first" }, "400": err },
       },
     },
+    "/api/v1/partners": {
+      get: {
+        summary: "Freight company partners (truck providers) with their scorecard",
+        parameters: [{ name: "status", in: "query", schema: { type: "string", enum: ["active", "probation", "suspended"] } }],
+        responses: { "200": { description: "Partners, each with an on-time, cold chain, alert rate, safety and overall score" }, "400": err },
+      },
+    },
+    "/api/v1/drivers": {
+      get: {
+        summary: "Drivers with their safety scorecard",
+        parameters: [
+          { name: "partner", in: "query", schema: { type: "string", example: "FP-01" } },
+          { name: "risk", in: "query", schema: { type: "string", enum: ["high", "watch", "good"] } },
+          { name: "limit", in: "query", schema: { type: "integer", minimum: 1 } },
+          { name: "offset", in: "query", schema: { type: "integer", minimum: 0 } },
+        ],
+        responses: { "200": { description: "Drivers" }, "400": err },
+      },
+    },
   },
   components: { schemas: { Error: { type: "object", properties: { error: { type: "object", properties: { code: { type: "string" }, message: { type: "string" } } } } } } },
 } as const;
