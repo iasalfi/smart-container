@@ -27,8 +27,8 @@ function Replay({ c, s }: { c: Container; s: Sample[] }) {
   }, [playing, s.length]);
   const cur = s[i];
   const paths: PathLine[] = [
-    { d: corridorPath(route), color: "#7F95AA", width: 3, dashed: true },
-    { d: actualPath(s.slice(0, i + 1)), color: "#0B2545", width: 3.4 },
+    { d: corridorPath(route), color: "#a29a86", width: 3, dashed: true },
+    { d: actualPath(s.slice(0, i + 1)), color: "#2f4f46", width: 3.4 },
   ];
   const events = s.filter((x, k) => x.door === "open" && (k === 0 || s[k - 1].door === "closed"));
   return (
