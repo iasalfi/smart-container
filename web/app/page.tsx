@@ -6,6 +6,8 @@ import { Insights } from "@/components/Insights";
 import { Tour } from "@/components/Tour";
 import { useApp, CUSTOMER_PERSONA_NAME } from "./providers";
 import { KsaMap, type Dot } from "@/components/KsaMap";
+import { BatteryIcon, ContainerIcon, DoorIcon, HealthRing, SignalBars, SpeedDial, Thermo } from "@/components/Art";
+import { CITIES } from "@/lib/cities";
 import { ApiGate, StatusPill, STATUS_COLOR } from "@/components/ui";
 import { PROFILES } from "@/lib/profiles";
 import { countByStatus, EMPTY_FILTER, filterFleet, type FleetFilter } from "@/lib/filter";
@@ -37,6 +39,7 @@ export default function FleetPage() {
   }, [filtered, sort, lang]);
   const dots: Dot[] = useMemo(() => filtered.map((c) => ({ id: c.id, lon: c.lon, lat: c.lat, color: STATUS_COLOR[c.status], hollow: !c.online, selected: c.id === selected || c.id === hovered, r: c.status === "normal" ? 3.6 : 5, pulse: c.status === "critical" && c.online, label: `${c.id} · ${t(`status_${c.status}` as const)}`, tip: [`${c.id} · ${t(`status_${c.status}` as const)}`, `${c.origin} → ${c.destination}`, `${c.tempC} °C · ${t("tip_speed", { v: Math.round(c.speedKmh) })}`, t("tip_open")] })), [filtered, selected, hovered, t]);
   const sel = selected ? scope.find((c) => c.id === selected) : undefined;
+  const selProfile = sel ? PROFILES.find((q) => q.id === sel.profileId) : undefined;
   const ids = useMemo(() => new Set(scope.map((c) => c.id)), [scope]);
   const scopedAlerts = alerts.filter((a) => ids.has(a.containerId) && a.state === "open");
   const panel =
@@ -72,8 +75,8 @@ export default function FleetPage() {
         {tile("critical", counts.critical, t("kpi_critical"), "kpi-critical")}
       </div>
       <p className="muted small" data-testid="offline-note">{t("kpi_offline", { n: counts.offline })}</p>
-      <Insights scope={scope} alerts={alerts} status={f.status} profile={f.profile} corridor={corridor}
-        onStatus={(st) => setF({ ...f, status: st })} onProfile={(p) => setF({ ...f, profile: p })} onCorridor={setCorridor} />
+      <Insights scope={scope} alerts={alerts} profile={f.profile} corridor={corridor}
+        onProfile={(p) => setF({ ...f, profile: p })} onCorridor={setCorridor} />
       <div className="filters">
         <label>{t("search")}<input type="search" value={f.q} placeholder={t("search_ph")} onChange={(e) => setF({ ...f, q: e.target.value })} data-testid="search" /></label>
         <label>{t("cargo")}
@@ -89,22 +92,32 @@ export default function FleetPage() {
       <div className="grid-main" id="fleet-map">
         <section className="card map-card">
           <KsaMap label={t("map_label")} dots={dots} onSelect={setSelected} zoomLabels={{ in: t("zoom_in"), out: t("zoom_out"), reset: t("zoom_reset") }}
-            legend={{ title: t("legend_title"), items: [{ color: STATUS_COLOR.normal, text: t("status_normal") }, { color: STATUS_COLOR.warning, text: t("status_warning") }, { color: STATUS_COLOR.critical, text: t("legend_critical_pulse"), pulse: true }, { color: "#4f5f6f", text: t("legend_offline"), hollow: true }] }} hint={t("map_hint")} />
+            legend={{ title: t("legend_title"), items: [{ color: STATUS_COLOR.normal, text: t("status_normal") }, { color: STATUS_COLOR.warning, text: t("status_warning") }, { color: STATUS_COLOR.critical, text: t("legend_critical_pulse"), pulse: true }, { color: "#4f5f6f", text: t("legend_offline"), hollow: true }] }} hint={t("map_hint")} truck={sel ? { lon: sel.lon, lat: sel.lat } : null}
+            cities={Object.values(CITIES).map((c) => ({ id: c.id, lon: c.lon, lat: c.lat, name: c[lang] }))} />
           <p className="muted small" aria-live="polite" data-testid="showing">{t("showing", { shown: filtered.length.toLocaleString("en-US"), total: scope.length.toLocaleString("en-US") })}</p>
         </section>
         <aside className="side">
           {sel ? (
-            <section className="card" data-testid="selected-card">
-              <h2>{sel.id}</h2>
-              <p className="muted">{sel.origin} → {sel.destination}</p>
-              <p><StatusPill status={sel.status} /> {sel.tempC} °C · {sel.rh}% RH</p>
-              <dl className="mini-stats">
-                <div><dt>{t("stat_speed")}</dt><dd>{Math.round(sel.speedKmh)} km/h</dd></div>
-                <div><dt>{t("stat_battery")}</dt><dd>{Math.round(sel.batteryPct)}%</dd></div>
-                <div><dt>{t("stat_door")}</dt><dd>{t(`door_${sel.door}` as const)}</dd></div>
-                <div><dt>{t("stat_signal")}</dt><dd>{sel.signal}/5</dd></div>
-              </dl>
-              <div className="hbar-wide" aria-hidden="true"><i style={{ width: `${Math.round(sel.healthScore)}%` }} /></div>
+            <section className="card twin" data-testid="selected-card">
+              <div className="twin-head">
+                <ContainerIcon status={sel.status} reefer={sel.reefer} size={64} led />
+                <div><h2>{sel.id}</h2><p className="muted small">{sel.origin} → {sel.destination}</p></div>
+                <StatusPill status={sel.status} />
+              </div>
+              <div className="twin-body">
+                <div className="twin-temp">
+                  <Thermo value={sel.tempC} lo={selProfile?.tMin ?? 0} hi={selProfile?.tMax ?? 8} set={sel.setpointC} label={`${sel.tempC} °C`} />
+                  <span className="twin-read">{sel.tempC} °C</span>
+                  <span className="muted small">{sel.rh}% RH</span>
+                </div>
+                <dl className="twin-stats">
+                  <div><dt>{t("stat_speed")}</dt><dd><SpeedDial kmh={sel.speedKmh} /><span>{Math.round(sel.speedKmh)} km/h</span></dd></div>
+                  <div><dt>{t("health_score")}</dt><dd><HealthRing value={sel.healthScore} size={56} /></dd></div>
+                  <div><dt>{t("stat_battery")}</dt><dd><BatteryIcon pct={sel.batteryPct} /><span>{Math.round(sel.batteryPct)}%</span></dd></div>
+                  <div><dt>{t("stat_signal")}</dt><dd><SignalBars n={sel.signal} /><span>{sel.signal}/5</span></dd></div>
+                  <div><dt>{t("stat_door")}</dt><dd><DoorIcon open={sel.door === "open"} /><span>{t(`door_${sel.door}` as const)}</span></dd></div>
+                </dl>
+              </div>
               <Link className="btn" href={`/container/?id=${sel.id}`} data-testid="open-selected">{t("open_container")}</Link>
             </section>
           ) : null}
@@ -127,7 +140,7 @@ export default function FleetPage() {
             <tbody>
               {sorted.slice(0, limit).map((c) => (
                 <tr key={c.id} data-testid="fleet-row" className={c.id === selected ? "row-sel" : undefined} onMouseEnter={() => setHovered(c.id)} onMouseLeave={() => setHovered(null)}>
-                  <td><Link href={`/container/?id=${c.id}`}>{c.id}</Link></td>
+                  <td><span className="idcell"><ContainerIcon status={c.status} reefer={c.reefer} size={34} /><Link href={`/container/?id=${c.id}`}>{c.id}</Link></span></td>
                   <td>{cargoName(c)}</td>
                   <td>{c.origin} → {c.destination}</td>
                   <td>{c.tempC} °C</td>
@@ -140,7 +153,7 @@ export default function FleetPage() {
         )}
         {filtered.length > 12 ? (
           <div className="table-foot">
-            <span className="muted small">{t("rows_shown", { n: Math.min(limit, filtered.length), total: filtered.length.toLocaleString("en-US") })}</span>
+            <span />
             {limit < filtered.length ? <button type="button" className="btn small ghost" onClick={() => setLimit((n) => n + 12)} data-testid="show-more">{t("show_more")}</button> : null}
             {limit > 12 ? <button type="button" className="btn small ghost" onClick={() => setLimit(12)} data-testid="show-fewer">{t("show_fewer")}</button> : null}
           </div>
