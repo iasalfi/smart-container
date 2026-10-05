@@ -117,7 +117,7 @@ test.describe("UX: keyboard, labels, speed, errors", () => {
     for (const k of ["normal", "warning", "critical"]) await expect(page.getByTestId(`kpi-${k}`)).not.toHaveText(/^\s*[\d,]+\s*$/);
     const pills = page.getByTestId("fleet-row").locator(".pill");
     for (const t of await pills.allInnerTexts()) expect(t.trim().length).toBeGreaterThan(0);
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     for (const t of await page.locator("[data-testid=alert-row] .pill").allInnerTexts()) expect(["Critical", "Warning"]).toContain(t.trim());
   });
 
