@@ -43,11 +43,11 @@ test.describe("Landing page and dashboard", () => {
     await expect(page.getByTestId("showing")).toContainText("1,000 of 1,000");
   });
 
-  test("TC-E-112 The status chart filters the fleet and toggles back @progression", async ({ page }) => {
+  test("TC-E-112 The status tiles filter the fleet and toggle back @progression", async ({ page }) => {
     await openFleet(page);
-    await page.getByTestId("ins-status-critical").click();
+    await page.getByTestId("kpi-critical").click();
     await expect(page.getByTestId("showing")).toContainText("27 of 1,000");
-    await page.getByTestId("ins-status-critical").click();
+    await page.getByTestId("kpi-critical").click();
     await expect(page.getByTestId("showing")).toContainText("1,000 of 1,000");
   });
 
@@ -145,5 +145,47 @@ test.describe("Landing page and dashboard", () => {
     await setPersona(page, "customer");
     await expect(page.getByTestId("hero")).not.toContainText("1,000 containers");
     await expect(page.getByTestId("showing")).not.toContainText("of 1,000");
+  });
+  test("TC-E-124 The hero shows a road scene with three trucks and an icon on each figure @progression @ui", async ({ page }) => {
+    await openFleet(page);
+    await expect(page.getByTestId("hero-art")).toBeVisible();
+    await expect(page.locator(".road-scene .drive")).toHaveCount(3);
+    await expect(page.locator(".hero-stat .hs-icon")).toHaveCount(4);
+  });
+
+  test("TC-E-125 Selecting a container opens its live twin with a thermometer, gauges and a truck on the map @progression", async ({ page }) => {
+    await openFleet(page);
+    await expect(page.getByTestId("map-truck")).toHaveCount(0);
+    await page.getByTestId("map-dot").first().click({ force: true });
+    const card = page.getByTestId("selected-card");
+    await expect(card).toBeVisible();
+    await expect(card.getByTestId("thermo")).toBeVisible();
+    await expect(card.locator(".twin-stats > div")).toHaveCount(5);
+    await expect(page.getByTestId("map-truck")).toBeVisible();
+  });
+
+  test("TC-E-126 Alert types appear as icon tiles whose counts add up to the open alerts @progression", async ({ page }) => {
+    await openFleet(page);
+    const tiles = page.getByTestId("alert-type-tile");
+    await expect(tiles).toHaveCount(7);
+    const counts = await tiles.locator("b").allInnerTexts();
+    const sum = counts.reduce((a, n) => a + Number(n), 0);
+    expect(sum).toBe(102);
+    await expect(page.getByTestId("hero-stat-alerts")).toContainText("102");
+  });
+
+  test("TC-E-127 Each table row shows a container icon and the map labels the seven cities @progression @ui", async ({ page }) => {
+    await openFleet(page);
+    await expect(page.getByTestId("fleet-row").first().locator(".cicon")).toHaveCount(1);
+    await expect(page.getByTestId("map-city")).toHaveCount(7);
+    await expect(page.getByTestId("map-city").first()).toBeVisible();
+  });
+
+  test("TC-E-128 The landing page states each fact once, with no repeated status chart or event list @regression", async ({ page }) => {
+    await openFleet(page);
+    await expect(page.getByTestId("ins-status-critical")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Latest events" })).toHaveCount(0);
+    await expect(page.getByTestId("hero")).not.toContainText("Follow");
+    await expect(page.getByTestId("panel-alerts")).toBeVisible();
   });
 });
