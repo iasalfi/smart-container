@@ -9,6 +9,7 @@ const PERSONAS: Persona[] = ["operator", "quality", "security", "customer"];
 
 const ICONS: Record<string, ReactNode> = {
   fleet: <path d="M3 7l9-4 9 4v10l-9 4-9-4V7zm9-1.8L6 8l6 2.7L18 8l-6-2.8zM5 9.6v6.1l6 2.7v-6.1L5 9.6zm14 0l-6 2.7v6.1l6-2.7V9.6z" />,
+  live: <path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.500A2.500 2.500 0 1112 6.500a2.500 2.500 0 010 5z" />,
   alerts: <path d="M12 3a6 6 0 00-6 6v3.6L4.3 15A1 1 0 005 16.700h14a1 1 0 00.7-1.700L18 12.600V9a6 6 0 00-6-6zm-2 15a2 2 0 004 0h-4z" />,
   operations: <path d="M4 5h16v2H4V5zm0 6h10v2H4v-2zm0 6h16v2H4v-2zm13-7.500l4 2.500-4 2.500V9.500z" />,
   analytics: <path d="M4 20V10h3.500v10H4zm6.300 0V4h3.500v16h-3.500zm6.300 0v-7H20v7h-3.400z" />,
@@ -25,6 +26,7 @@ export function Sidebar() {
   const path = usePathname() ?? "/";
   const nav = [
     { icon: "fleet", href: "/", label: t("nav_fleet"), match: (p: string) => p === "/" || p.startsWith("/container") || p.startsWith("/route") || p.startsWith("/health") || p.startsWith("/replay") || p.startsWith("/modules") || /^\/report(\/|$)/.test(p) },
+    { icon: "live", href: "/live/", label: t("nav_live"), match: (p: string) => p.startsWith("/live") },
     { icon: "alerts", href: "/alerts/", label: t("nav_alerts"), match: (p: string) => p.startsWith("/alerts") },
     ...(persona === "customer" ? [] : [{ icon: "operations", href: "/operations/", label: t("nav_operations"), match: (p: string) => p.startsWith("/operations") }]),
     { icon: "analytics", href: "/analytics/", label: t("nav_analytics"), match: (p: string) => p.startsWith("/analytics") },
