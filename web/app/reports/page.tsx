@@ -31,6 +31,7 @@ export default function ReportsPage() {
       case "alert": return t(`alert_type_${v}` as Key);
       case "cargo": return cargoName(String(v));
       case "risk": return t(`pp_risk_${v}` as Key);
+      case "risk": return t(`pp_risk_${v}` as Key);
       case "jstatus": return t(`ops_status_${v}` as Key);
       default: return String(v);
     }
