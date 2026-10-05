@@ -6,6 +6,8 @@ import { ApiError, fetchAlerts, fetchFleet } from "@/lib/api";
 import { canMove, nextProblemId, type LogEntry, type Problem, type ProblemCandidate, type ResolutionCode, type TicketRecord } from "@/lib/itsm";
 import { seedJourneys, type Journey } from "@/lib/journey";
 import type { Alert, AlertState, Container, Lang, LockState, Persona } from "@/lib/types";
+import { nextId, seedRegistry, type Driver, type DriverEvent, type Partner, type Registry } from "@/lib/partners";
+import { DEVICE_LIMITS, advanceWo, buildCases, nextWoId, seedWorkOrders, caseWorkOrder, deviceWorkOrder, type Case, type DeviceIssue, type DeviceLimits, type PostDelivery, type WorkOrder } from "@/lib/cases";
 
 export const CUSTOMER_PERSONA_NAME = "Najd Fresh Foods";
 const STORE = "scm-demo-v1";
@@ -45,11 +47,33 @@ interface Ctx {
   setLock: (containerId: string, lock: LockState, action: "lock" | "unlock") => void;
   audit: AuditEntry[];
   ready: boolean;
+  /** Freight partners, drivers, logged driver events and operator driver assignments. */
+  registry: Registry;
+  savePartner: (p: Partner) => void;
+  removePartner: (id: string) => void;
+  saveDriver: (d: Driver) => void;
+  removeDriver: (id: string) => void;
+  logEvent: (e: Omit<DriverEvent, "id" | "source">) => void;
+  assignDriver: (containerId: string, driverId: string) => void;
+  /** One case per container, built from the alerts. */
+  cases: Case[];
+  takeCase: (c: Case) => void;
+  resolveCase: (c: Case) => void;
+  workOrders: WorkOrder[];
+  openWorkOrder: (c: Case) => void;
+  raiseDeviceOrder: (i: DeviceIssue) => void;
+  advanceWorkOrder: (id: string) => void;
+  releaseWorkOrder: (id: string) => void;
+  released: number;
+  deviceLimits: DeviceLimits;
+  setDeviceLimits: (l: DeviceLimits) => void;
+  postDelivery: Record<string, PostDelivery>;
+  recordPost: (containerId: string, step: PostDelivery) => void;
 }
 
 const C = createContext<Ctx | null>(null);
 
-interface Saved { lang?: Lang; persona?: Persona; thresholds?: Thresholds; alertStates?: Record<string, AlertState>; lockOverride?: Record<string, LockState>; audit?: AuditEntry[]; tickets?: Record<string, TicketRecord>; problems?: Problem[]; userJourneys?: Journey[]; journeyEdits?: Record<string, Journey> }
+interface Saved { lang?: Lang; persona?: Persona; thresholds?: Thresholds; alertStates?: Record<string, AlertState>; lockOverride?: Record<string, LockState>; audit?: AuditEntry[]; tickets?: Record<string, TicketRecord>; problems?: Problem[]; userJourneys?: Journey[]; journeyEdits?: Record<string, Journey>; registry?: Registry; workOrders?: WorkOrder[]; released?: number; deviceLimits?: DeviceLimits; postDelivery?: Record<string, PostDelivery> }
 
 function load(): Saved {
   try { const raw = window.localStorage.getItem(STORE); return raw ? (JSON.parse(raw) as Saved) : {}; } catch { return {}; }
@@ -66,6 +90,11 @@ export function Providers({ children }: { children: ReactNode }) {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [userJourneys, setUserJourneys] = useState<Journey[]>([]);
   const [journeyEdits, setJourneyEdits] = useState<Record<string, Journey>>({});
+  const [registry, setRegistry] = useState<Registry>(() => seedRegistry());
+  const [workOrders, setWorkOrders] = useState<WorkOrder[] | null>(null);
+  const [released, setReleased] = useState(0);
+  const [deviceLimits, setDeviceLimitsS] = useState<DeviceLimits>(DEVICE_LIMITS);
+  const [postDelivery, setPostDelivery] = useState<Record<string, PostDelivery>>({});
   const [ready, setReady] = useState(false);
   const [fleet, setFleet] = useState<Container[] | null>(null);
   const [rawAlerts, setRawAlerts] = useState<Alert[] | null>(null);
@@ -85,6 +114,11 @@ export function Providers({ children }: { children: ReactNode }) {
     if (s.problems) setProblems(s.problems);
     if (s.userJourneys) setUserJourneys(s.userJourneys);
     if (s.journeyEdits) setJourneyEdits(s.journeyEdits);
+    if (s.registry) setRegistry(s.registry);
+    if (s.workOrders) setWorkOrders(s.workOrders);
+    if (typeof s.released === "number") setReleased(s.released);
+    if (s.deviceLimits) setDeviceLimitsS({ ...DEVICE_LIMITS, ...s.deviceLimits });
+    if (s.postDelivery) setPostDelivery(s.postDelivery);
     setReady(true);
   }, []);
 
@@ -95,8 +129,8 @@ export function Providers({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    try { window.localStorage.setItem(STORE, JSON.stringify({ lang, persona, thresholds, alertStates, lockOverride, audit, tickets, problems, userJourneys, journeyEdits })); } catch { /* storage can be blocked */ }
-  }, [ready, lang, persona, thresholds, alertStates, lockOverride, audit, tickets, problems, userJourneys, journeyEdits]);
+    try { window.localStorage.setItem(STORE, JSON.stringify({ lang, persona, thresholds, alertStates, lockOverride, audit, tickets, problems, userJourneys, journeyEdits, registry, workOrders, released, deviceLimits, postDelivery })); } catch { /* storage can be blocked */ }
+  }, [ready, lang, persona, thresholds, alertStates, lockOverride, audit, tickets, problems, userJourneys, journeyEdits, registry, workOrders, released, deviceLimits, postDelivery]);
 
   const t = useCallback((key: Key, params?: Record<string, string | number>) => translate(lang, key, params), [lang]);
   useEffect(() => {
@@ -121,6 +155,15 @@ export function Providers({ children }: { children: ReactNode }) {
 
   const alerts = useMemo(() => (rawAlerts ?? []).map((a) => ({ ...a, state: alertStates[a.id] ?? a.state })), [rawAlerts, alertStates]);
 
+  // The work orders that ship with the demo are created once, when the fleet and the alerts have both arrived.
+  useEffect(() => {
+    if (!ready || workOrders !== null || !fleet || !rawAlerts) return;
+    setWorkOrders(seedWorkOrders(fleet, new Set(rawAlerts.map((a) => a.containerId))));
+  }, [ready, workOrders, fleet, rawAlerts]);
+  const orders = useMemo(() => workOrders ?? [], [workOrders]);
+  const profileById = useMemo(() => new Map((fleet ?? []).map((c) => [c.id, c.profileId])), [fleet]);
+  const cases = useMemo(() => buildCases({ alerts, profileOf: (id) => profileById.get(id) ?? "dry", tickets, workOrders: orders }), [alerts, profileById, tickets, orders]);
+
   const logTo = (rec: TicketRecord | undefined, kind: LogEntry["kind"], text: string): TicketRecord => {
     const base: TicketRecord = rec ?? { log: [] };
     return { ...base, log: [...base.log, { n: base.log.length + 1, at: Date.now(), kind, text, who: "me" }] };
@@ -142,6 +185,25 @@ export function Providers({ children }: { children: ReactNode }) {
     return true;
   };
 
+  const ackAlerts = (ids: string[], to: "acknowledged" | "resolved", code?: ResolutionCode) => {
+    const raws = (rawAlerts ?? []).filter((a) => ids.includes(a.id));
+    setAlertStates((m) => { const n = { ...m }; for (const a of raws) { const cur = n[a.id] ?? a.state; if (cur === "closed" || cur === "resolved") continue; if (to === "acknowledged" && cur !== "open") continue; n[a.id] = to; } return n; });
+    setTickets((m) => {
+      const n = { ...m };
+      for (const a of raws) {
+        const cur = alertStates[a.id] ?? a.state;
+        if (cur === "closed" || cur === "resolved" || (to === "acknowledged" && cur !== "open")) continue;
+        let r = logTo({ ...(n[a.id] ?? { log: [] }), owner: n[a.id]?.owner ?? "me" }, "assign", "me");
+        r = logTo(r, "state", to);
+        r = { ...r, ackAge: r.ackAge ?? a.minutesAgo, ...(to === "resolved" ? { resolveAge: a.minutesAgo, code: code ?? "fixed" } : {}) };
+        n[a.id] = r;
+      }
+      return n;
+    });
+  };
+  const setOrders = (fn: (l: WorkOrder[]) => WorkOrder[]) => setWorkOrders((l) => fn(l ?? []));
+  const touch = (fn: (r: Registry) => Registry) => setRegistry((r) => fn(r));
+
   const value: Ctx = {
     lang, setLang: setLangS, persona, setPersona: setPersonaS, t, thresholds, setThresholds: setThresholdsS, alerts,
     transition, tickets, problems, journeys, saveJourney,
@@ -160,6 +222,30 @@ export function Providers({ children }: { children: ReactNode }) {
       setLockOverride((m) => ({ ...m, [containerId]: lock }));
       setAudit((a) => [{ id: `${containerId}-${a.length + 1}`, action, containerId, at: Date.now() }, ...a].slice(0, 20));
     },
+    registry,
+    savePartner: (p) => touch((r) => ({ ...r, partners: r.partners.some((x) => x.id === p.id) ? r.partners.map((x) => (x.id === p.id ? p : x)) : [...r.partners, { ...p, id: p.id || nextId("FP", r.partners) }] })),
+    removePartner: (id) => touch((r) => { const gone = new Set(r.drivers.filter((d) => d.partnerId === id).map((d) => d.id)); return { ...r, partners: r.partners.filter((p) => p.id !== id), drivers: r.drivers.filter((d) => d.partnerId !== id), events: r.events.filter((e) => !gone.has(e.driverId)), assignments: Object.fromEntries(Object.entries(r.assignments).filter(([, d]) => !gone.has(d))) }; }),
+    saveDriver: (d) => touch((r) => ({ ...r, drivers: r.drivers.some((x) => x.id === d.id) ? r.drivers.map((x) => (x.id === d.id ? d : x)) : [...r.drivers, { ...d, id: d.id || nextId("DR", r.drivers) }] })),
+    removeDriver: (id) => touch((r) => ({ ...r, drivers: r.drivers.filter((d) => d.id !== id), events: r.events.filter((e) => e.driverId !== id), assignments: Object.fromEntries(Object.entries(r.assignments).filter(([, d]) => d !== id)) })),
+    logEvent: (e) => touch((r) => ({ ...r, events: [...r.events, { ...e, id: nextId("EV", r.events), source: "operator" }] })),
+    assignDriver: (containerId, driverId) => touch((r) => ({ ...r, assignments: { ...r.assignments, [containerId]: driverId } })),
+    cases,
+    takeCase: (c) => ackAlerts(c.alertIds, "acknowledged"),
+    resolveCase: (c) => ackAlerts(c.alertIds, "resolved"),
+    workOrders: orders,
+    openWorkOrder: (c) => { ackAlerts(c.alertIds, "acknowledged"); setOrders((l) => (l.some((w) => w.caseId === c.id) ? l : [caseWorkOrder(c, nextWoId(l)), ...l])); },
+    raiseDeviceOrder: (i) => setOrders((l) => (l.some((w) => w.containerId === i.containerId && w.kind === "preventive") ? l : [deviceWorkOrder(i, nextWoId(l)), ...l])),
+    advanceWorkOrder: (id) => setOrders((l) => l.map((w) => (w.id === id ? advanceWo(w) : w))),
+    releaseWorkOrder: (id) => {
+      const w = orders.find((x) => x.id === id);
+      if (!w) return;
+      setOrders((l) => l.filter((x) => x.id !== id));
+      setReleased((n) => n + 1);
+      const c = cases.find((x) => x.id === w.caseId);
+      if (c) ackAlerts(c.alertIds, "resolved", "fixed");
+    },
+    released, deviceLimits, setDeviceLimits: setDeviceLimitsS, postDelivery,
+    recordPost: (containerId, step) => setPostDelivery((m) => ({ ...m, [containerId]: step })),
     audit, ready, fleet, alertsReady: rawAlerts !== null, apiError: fleetError ?? alertsError, retry: () => setAttempt((n) => n + 1),
   };
   return <C.Provider value={value}>{children}</C.Provider>;
