@@ -11,7 +11,7 @@ Every automated test carries one ID from this bank in its title. `npm run test:b
 
 Pipeline order: lint and type check, test-bank check, unit and API tests, build of both services, end-to-end tests (feature, UI, UX, accessibility, service boundary), then production deploy of the API and the web UI only when every stage is green, then a smoke test on both live URLs with automatic rollback.
 
-Totals: 202 cases. Unit 66, API 35, end-to-end 101. Regression 125, progression 30, negative 47.
+Totals: 207 cases. Unit 66, API 35, end-to-end 106. Regression 126, progression 34, negative 47.
 
 ## Unit tests: data, health model, alerts, route, filters, language
 
@@ -257,7 +257,7 @@ Totals: 202 cases. Unit 66, API 35, end-to-end 101. Regression 125, progression 
 | TC-E-109 | Fleet | progression | DM-01 | Review critical containers filters the fleet to the 27 critical ones | Click Review critical containers | Showing 27 of 1,000; critical tile pressed |
 | TC-E-110 | Fleet | progression | DM-01 | The quick tour steps through five screens and finishes | Open the tour, press Next four times, then Finish | Steps 1 to 5 appear in order and the dialog closes |
 | TC-E-111 | Fleet | negative | DM-01 | Closing the tour with Escape or the backdrop leaves the dashboard unchanged | Open the tour, press Escape; open again, click the backdrop | Dialog closes both ways; fleet stays 1,000 of 1,000 |
-| TC-E-112 | Fleet | progression | DM-01 | The status chart filters the fleet and toggles back | Click the Critical status chart row twice | 27 of 1,000, then back to 1,000 of 1,000 |
+| TC-E-112 | Fleet | progression | DM-01 | The status tiles filter the fleet and toggle back | Click the Critical status tile twice | 27 of 1,000, then back to 1,000 of 1,000 |
 | TC-E-113 | Fleet | progression | DM-01 | The cargo chart filters by cargo type | Click the Dairy bar in the cargo chart | 158 of 1,000 and the cargo filter shows Dairy |
 | TC-E-114 | Fleet | progression | DM-01 | A corridor bar filters the fleet and its chip clears the filter | Click the busiest corridor, then its chip | Fleet narrows with a corridor chip; chip removes the filter |
 | TC-E-115 | Fleet | progression | DM-01 | Table headers sort ascending, descending, then back to the original order | Click the Cargo health header three times | Ascending, descending, then original order |
@@ -269,3 +269,8 @@ Totals: 202 cases. Unit 66, API 35, end-to-end 101. Regression 125, progression 
 | TC-E-121 | Fleet | progression | NFR-11 | The landing hero switches to Arabic and right to left | Switch to Arabic on the landing page | Right to left, Arabic hero text and tour button |
 | TC-E-122 | UI | regression | NFR-10 | The hero stacks into one column on a phone | Open the fleet at 390 px wide | Hero figures sit below the hero text |
 | TC-E-123 | Fleet | negative | FR-05 | The customer view scopes the hero figures to that customer | Switch to the Customer view | Hero and counts show only that customer, not 1,000 |
+| TC-E-124 | UI | progression | DM-01 | The hero shows a road scene with three trucks and an icon on each figure | Open the fleet page | Road scene with three trucks; each of the four figures has an icon |
+| TC-E-125 | Fleet | progression | DM-01 | Selecting a container opens its live twin with a thermometer, gauges and a truck on the map | Click a dot on the map | Card shows the container, thermometer, five readings; a truck marks the container on the map |
+| TC-E-126 | Fleet | progression | DM-03 | Alert types appear as icon tiles whose counts add up to the open alerts | Open the fleet page | Seven icon tiles whose counts total 102, matching the open alerts figure |
+| TC-E-127 | UI | progression | DM-01 | Each table row shows a container icon and the map labels the seven cities | Open the fleet page | Container icon on each row; seven city labels on the map |
+| TC-E-128 | Fleet | regression | NFR-10 | The landing page states each fact once, with no repeated status chart or event list | Open the fleet page | No status donut, no latest events list, no intro paragraph repeating the fleet size |
