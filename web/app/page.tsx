@@ -4,6 +4,10 @@ import { useMemo, useState } from "react";
 import { Hero } from "@/components/Hero";
 import { Insights } from "@/components/Insights";
 import { Tour } from "@/components/Tour";
+import { KpiTile } from "@/components/AnalyticsWidgets";
+import { QUALITY_TYPES, SECURITY_TYPES, REPORTS, alertsIn, analyticsFor, journeysIn } from "@/lib/analytics";
+import { SNAPSHOT_MS } from "@/lib/journey";
+import type { Key } from "@/lib/i18n";
 import { useApp, CUSTOMER_PERSONA_NAME } from "./providers";
 import { KsaMap, type Dot } from "@/components/KsaMap";
 import { BatteryIcon, ContainerIcon, DoorIcon, HealthRing, SignalBars, SpeedDial, Thermo } from "@/components/Art";
@@ -16,7 +20,7 @@ import type { Container, Status } from "@/lib/types";
 type SortKey = "id" | "cargo" | "route" | "temp" | "health";
 
 export default function FleetPage() {
-  const { t, lang, persona, alerts, fleet, apiError, retry } = useApp();
+  const { t, lang, persona, alerts, fleet, journeys, tickets, apiError, retry } = useApp();
   const [f, setF] = useState<FleetFilter>(EMPTY_FILTER);
   const [selected, setSelected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -42,6 +46,8 @@ export default function FleetPage() {
   const selProfile = sel ? PROFILES.find((q) => q.id === sel.profileId) : undefined;
   const ids = useMemo(() => new Set(scope.map((c) => c.id)), [scope]);
   const scopedAlerts = alerts.filter((a) => ids.has(a.containerId) && a.state === "open");
+  const personaStats = useMemo(() => analyticsFor(persona, scope, alertsIn(alerts, scope), journeysIn(journeys, scope), tickets, SNAPSHOT_MS), [persona, scope, alerts, journeys, tickets]);
+  const insightAlerts = useMemo(() => { const only = persona === "quality" ? QUALITY_TYPES : persona === "security" ? SECURITY_TYPES : null; return only ? alerts.filter((a) => only.includes(a.type)) : alerts; }, [alerts, persona]);
   const panel =
     persona === "quality" ? "health" : persona === "security" ? "door" : "alerts";
   const lowHealth = useMemo(() => [...scope].sort((a, b) => a.healthScore - b.healthScore).slice(0, 8), [scope]);
@@ -68,6 +74,13 @@ export default function FleetPage() {
       <div className="page-head" id="dashboard">
         <div><h1>{t("fleet_title")}</h1><p className="muted" data-testid="fleet-sub">{t("fleet_sub", { n: scope.length.toLocaleString("en-US") })}</p></div>
       </div>
+      <section className="persona-strip" data-testid="persona-strip" data-persona={persona} aria-label={t(`dash_for_${persona}` as Key)}>
+        <div className="ps-head">
+          <h2>{t(`dash_for_${persona}` as Key)}</h2>
+          <span className="ps-links"><Link className="btn small ghost" href="/analytics/" data-testid="ps-analytics">{t("an_open_analytics")}</Link><Link className="btn small ghost" href="/reports/" data-testid="ps-reports">{t("an_open_reports")} ({REPORTS[persona].length})</Link></span>
+        </div>
+        <div className="an-kpis">{personaStats.kpis.map((k) => <KpiTile key={k.id} k={k} />)}</div>
+      </section>
       <div className="kpis" role="group" aria-label="Status filter">
         <div className="kpi static kpi-total" data-testid="kpi-total"><span className="kpi-n">{counts.total.toLocaleString("en-US")}</span><span className="kpi-l">{t("kpi_total")}</span></div>
         {tile("normal", counts.normal, t("kpi_normal"), "kpi-normal")}
@@ -75,7 +88,7 @@ export default function FleetPage() {
         {tile("critical", counts.critical, t("kpi_critical"), "kpi-critical")}
       </div>
       <p className="muted small" data-testid="offline-note">{t("kpi_offline", { n: counts.offline })}</p>
-      <Insights scope={scope} alerts={alerts} profile={f.profile} corridor={corridor}
+      <Insights scope={scope} alerts={insightAlerts} profile={f.profile} corridor={corridor}
         onProfile={(p) => setF({ ...f, profile: p })} onCorridor={setCorridor} />
       <div className="filters">
         <label>{t("search")}<input type="search" value={f.q} placeholder={t("search_ph")} onChange={(e) => setF({ ...f, q: e.target.value })} data-testid="search" /></label>
