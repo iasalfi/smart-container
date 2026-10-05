@@ -5,6 +5,7 @@ import { project } from "@/lib/geo";
 
 export interface Dot { id: string; lon: number; lat: number; color: string; r?: number; selected?: boolean; hollow?: boolean; label?: string; pulse?: boolean; tip?: string[] }
 export interface PathLine { d: string; color: string; width?: number; dashed?: boolean; label?: string }
+export interface CityMark { id: string; lon: number; lat: number; name: string }
 export interface Pin { id: string; lon: number; lat: number; color: string; label: string }
 
 interface Props {
@@ -20,9 +21,10 @@ interface Props {
   /** Optional key shown on the map (dashboard only). */
   legend?: { title: string; items: { color: string; text: string; hollow?: boolean; pulse?: boolean }[] } | null;
   hint?: string;
+  cities?: CityMark[];
 }
 
-export function KsaMap({ label, dots = [], paths = [], pins = [], truck, onSelect, zoomLabels, focus, legend, hint }: Props) {
+export function KsaMap({ label, dots = [], paths = [], pins = [], truck, onSelect, zoomLabels, focus, legend, hint, cities = [] }: Props) {
   const [zoom, setZoom] = useState(focus?.zoom ?? 1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -70,6 +72,15 @@ export function KsaMap({ label, dots = [], paths = [], pins = [], truck, onSelec
             {p.label ? <title>{p.label}</title> : null}
           </path>
         ))}
+        {cities.map((cm) => {
+          const p = project(cm);
+          return (
+            <g key={cm.id} transform={`translate(${p.x} ${p.y}) scale(${unit})`} pointerEvents="none" data-testid="map-city">
+              <rect x="-3.500" y="-3.500" width="7" height="7" rx="1.500" fill="#0b2545" stroke="#fff" strokeWidth="1.500" />
+              <text x="7" y="3.500" className="city-lbl">{cm.name}</text>
+            </g>
+          );
+        })}
         {dots.filter((d) => d.pulse).map((d) => {
           const p = project(d);
           return <circle key={`ring-${d.id}`} className="pulse-ring" cx={p.x} cy={p.y} r={5 * unit} fill="none" stroke={d.color} strokeWidth={1.6 * unit} pointerEvents="none" style={{ ["--pr" as string]: `${15 * unit}px` }} />;
