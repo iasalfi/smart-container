@@ -189,19 +189,21 @@ test.describe("Landing page and dashboard", () => {
     await expect(page.getByTestId("panel-alerts")).toBeVisible();
   });
 
-  test("TC-E-167 The theme is a dull pastel palette of sand, sage and dusty teal with a light top bar @regression @ui", async ({ page }) => {
+  test("TC-E-167 The theme is a soft grey-blue canvas with a dark navy sidebar, a white top bar and an indigo accent @regression @ui", async ({ page }) => {
     await openFleet(page);
     const t = await page.evaluate(() => {
       const css = getComputedStyle(document.documentElement);
       const lum = (c: string) => { const m = c.match(/\d+/g)!.slice(0, 3).map(Number); return (0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]) / 255; };
       const bar = getComputedStyle(document.querySelector(".topbar")!).backgroundColor;
+      const side = getComputedStyle(document.querySelector(".sidebar")!).backgroundColor;
       const hero = getComputedStyle(document.querySelector("[data-testid=hero]")!).backgroundImage;
-      return { bg: css.getPropertyValue("--bg").trim(), teal: css.getPropertyValue("--teal").trim(), barLum: lum(bar), hero };
+      return { bg: css.getPropertyValue("--bg").trim(), teal: css.getPropertyValue("--teal").trim(), barLum: lum(bar), sideLum: lum(side), hero };
     });
-    expect(t.bg).toBe("#f5f1e8");
-    expect(t.teal).toBe("#4f8f84");
+    expect(t.bg).toBe("#f2f6f9");
+    expect(t.teal).toBe("#5a66f1");
     expect(t.barLum).toBeGreaterThan(0.8);
+    expect(t.sideLum).toBeLessThan(0.25);
     expect(t.hero).toContain("linear-gradient");
-    for (const old of ["#0b2545", "#1b5fd1"]) expect(await page.content()).not.toContain(old);
+    for (const old of ["#0b2545", "#1b5fd1", "#f5f1e8"]) expect(await page.content()).not.toContain(old);
   });
 });
