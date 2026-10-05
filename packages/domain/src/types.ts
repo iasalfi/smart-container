@@ -2,7 +2,7 @@ export type Status = "normal" | "warning" | "critical";
 export type Severity = "critical" | "warning";
 export type DoorState = "closed" | "open";
 export type LockState = "locked" | "unlocked" | "cut" | "none";
-export type AlertState = "open" | "acknowledged" | "closed";
+export type AlertState = "open" | "acknowledged" | "in_progress" | "resolved" | "closed";
 export type Persona = "operator" | "quality" | "security" | "customer";
 export type Lang = "en" | "ar";
 
