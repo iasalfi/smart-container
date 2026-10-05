@@ -17,7 +17,7 @@ function GasBar({ label, value, limit, max }: { label: string; value: number; li
     <div className="gasbar" data-testid={`gas-${label}`} data-high={high}>
       <div className="gasbar-head"><strong>{label}</strong><span>{value} ppm · {high ? t("gas_high") : t("gas_ok")}</span></div>
       <div className="gasbar-track" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={value}>
-        <div className="gasbar-fill" style={{ width: `${Math.min(100, (value / max) * 100)}%`, background: high ? "#D64545" : "#3BA55D" }} />
+        <div className="gasbar-fill" style={{ width: `${Math.min(100, (value / max) * 100)}%`, background: high ? "#c9695d" : "#6fa585" }} />
         <div className="gasbar-limit" style={{ left: `${(limit / max) * 100}%` }} />
       </div>
     </div>
