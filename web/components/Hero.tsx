@@ -54,7 +54,7 @@ export function Hero({ scope, openAlerts, onExplore, onCritical, onTour }: Props
       </div>
       <dl className="hero-stats">
         {tiles.map((x) => (
-          <div key={x.k} className="hero-stat" data-testid={`$hero-stat-${x.k}`}><dd>{x.v}</dd><dt>{x.l}</dt></div>
+          <div key={x.k} className="hero-stat" data-testid={`hero-stat-${x.k}`}><dd>{x.v}</dd><dt>{x.l}</dt></div>
         ))}
       </dl>
     </section>
