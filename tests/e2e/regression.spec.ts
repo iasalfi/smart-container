@@ -101,14 +101,14 @@ test.describe("Regression: features", () => {
   });
 
   test("TC-E-014 Alerts centre lists 102 alerts, critical first @regression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await expect(page.getByTestId("alerts-count")).toContainText("102 alerts");
     await expect(page.getByTestId("alert-row")).toHaveCount(102);
     await expect(page.getByTestId("alert-row").first()).toHaveAttribute("data-severity", "critical");
   });
 
   test("TC-E-015 Severity and state filters narrow the list @regression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await page.getByTestId("sev-filter").selectOption("warning");
     const rows = page.getByTestId("alert-row");
     await expect(rows).toHaveCount(61);
@@ -118,7 +118,7 @@ test.describe("Regression: features", () => {
   });
 
   test("TC-E-016 Alert search by container ID @regression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await page.getByTestId("alert-search").fill("SC-1014");
     const n = await page.getByTestId("alert-row").count();
     expect(n).toBeGreaterThan(0);
@@ -168,16 +168,16 @@ test.describe("Regression: features", () => {
     }
   });
 
-  test("TC-E-022 Main navigation reaches Fleet, Alerts and Admin @regression", async ({ page }) => {
+  test("TC-E-022 Main navigation reaches the control tower, Cases and Settings @regression", async ({ page }) => {
     await page.goto("/");
     const nav = page.getByRole("navigation", { name: "Main" });
-    await nav.getByRole("link", { name: "Alerts" }).click();
+    await nav.getByRole("link", { name: "Cases" }).click();
     await expect(page).toHaveURL(/alerts/);
-    await expect(nav.getByRole("link", { name: "Alerts" })).toHaveAttribute("aria-current", "page");
-    await nav.getByRole("link", { name: "Admin" }).click();
+    await expect(nav.getByRole("link", { name: "Cases" })).toHaveAttribute("aria-current", "page");
+    await nav.getByRole("link", { name: "Settings" }).click();
     await expect(page).toHaveURL(/admin/);
-    await expect(nav.getByRole("link", { name: "Admin" })).toHaveAttribute("aria-current", "page");
-    await nav.getByRole("link", { name: "Fleet" }).click();
+    await expect(nav.getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
+    await nav.getByRole("link", { name: "Control tower" }).click();
     await expect(page.getByTestId("kpi-total")).toBeVisible();
     expect(await num(page, "kpi-total")).toBe(1000);
   });
