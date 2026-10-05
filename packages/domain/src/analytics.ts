@@ -2,6 +2,9 @@ import type { Alert, AlertType, Container, Persona } from "./types";
 import { currentDelayMin, etaMs, journeyStatus, type Journey } from "./journey";
 import { PROFILES } from "./profiles";
 import { itsmStats, ticketView, type ItsmStats, type TicketRecord } from "./itsm";
+import { buildCases, caseStats, deviceIssues, WO_STAGES, type CaseStats, type DeviceIssue, type WorkOrder } from "./cases";
+import { seedRegistry, type Registry } from "./partners";
+import { buildPeople, type People } from "./people";
 
 /**
  * Persona-aware analytics and reports.
@@ -34,7 +37,7 @@ export function countBy<T>(items: T[], key: (t: T) => string): Slice[] {
   return [...m.entries()].map(([k, n]) => ({ key: k, n })).sort((a, b) => b.n - a.n || (a.key < b.key ? -1 : 1));
 }
 
-export type KpiUnit = "count" | "pct" | "score";
+export type KpiUnit = "count" | "pct" | "score" | "min";
 export type Tone = "good" | "warn" | "bad" | "neutral";
 export interface Kpi { id: string; value: number; unit: KpiUnit; tone: Tone }
 
@@ -42,14 +45,15 @@ export type WidgetId =
   | "status_mix" | "delay_bands" | "corridor_load" | "alert_types" | "sla"
   | "cargo_health" | "temp_compliance" | "health_bands"
   | "security_types" | "corridor_security" | "lock_state"
-  | "eta_buckets" | "cargo_mix";
+  | "eta_buckets" | "cargo_mix"
+  | "partner_league" | "partner_share" | "driver_risk" | "driver_events" | "licence_expiry" | "driver_top_risk" | "mro_board" | "device_health";
 
 /** Widgets in display order for each persona. */
 export const WIDGETS: Record<Persona, WidgetId[]> = {
-  operator: ["status_mix", "delay_bands", "corridor_load", "alert_types", "sla"],
-  quality: ["temp_compliance", "cargo_health", "health_bands", "alert_types"],
-  security: ["security_types", "lock_state", "corridor_security", "sla"],
-  customer: ["eta_buckets", "status_mix", "cargo_mix", "alert_types"],
+  operator: ["status_mix", "delay_bands", "corridor_load", "alert_types", "sla", "partner_league", "driver_risk", "licence_expiry", "mro_board", "device_health"],
+  quality: ["temp_compliance", "cargo_health", "health_bands", "alert_types", "partner_league"],
+  security: ["security_types", "lock_state", "corridor_security", "sla", "driver_risk", "driver_events", "driver_top_risk"],
+  customer: ["eta_buckets", "status_mix", "cargo_mix", "alert_types", "partner_share"],
 };
 
 export const DELAY_BANDS = ["on_time", "d6_30", "d31_60", "d60_plus"] as const;
@@ -86,6 +90,11 @@ export interface Analytics {
   etaBuckets: Slice[];
   cargoMix: Slice[];
   itsm: ItsmStats;
+  /** Cases: one per container, however many alarms it raised. */
+  cases: CaseStats;
+  people: People;
+  mro: { stages: { key: string; n: number }[]; preventive: number; reactive: number };
+  devices: { total: number; byReason: { key: string; n: number }[]; issues: DeviceIssue[] };
   empty: boolean;
 }
 
@@ -100,6 +109,7 @@ function inBand(c: Container): boolean {
 /** Everything the Analytics page and the dashboard strip draw, for one persona and one scope. */
 export function analyticsFor(
   persona: Persona, scope: Container[], alerts: Alert[], journeys: Journey[], tickets: Record<string, TicketRecord>, nowMs: number,
+  reg: Registry = seedRegistry(), workOrders: WorkOrder[] = [],
 ): Analytics {
   const open = alerts.filter((a) => a.state === "open");
   const active = journeys.filter((j) => { const s = journeyStatus(j); return s === "in_transit" || s === "delayed"; });
@@ -114,27 +124,43 @@ export function analyticsFor(
   const onTimePct = active.length === 0 ? 100 : pct(active.length - delayed.length, active.length);
   const health = avg(scope.map((c) => c.healthScore));
   const critical = open.filter((a) => a.severity === "critical").length;
+  const profileOf = (id: string) => byId.get(id)?.profileId ?? "dry";
+  const cases = caseStats(buildCases({ alerts, profileOf, tickets, workOrders }));
+  const people = buildPeople(reg, scope, alerts, journeys);
+  const scoped = new Set(scope.map((c) => c.id));
+  const wos = workOrders.filter((w) => scoped.has(w.containerId));
+  const issues = deviceIssues(scope);
+  const oobAvg = (cs: Container[]) => avg(cs.map((c) => c.outOfBandMin));
+  const oobReefer = oobAvg(reefers);
+  const carrier: Kpi = { id: "x_carrier", value: people.carrierScore, unit: "score", tone: people.carrierScore >= 80 ? "good" : people.carrierScore >= 65 ? "warn" : "bad" };
+  const driverK: Kpi = { id: "x_driver", value: people.driverScore, unit: "score", tone: people.driverScore >= 80 ? "good" : people.driverScore >= 65 ? "warn" : "bad" };
 
   const kpis: Kpi[] = persona === "quality" ? [
+    { id: "q_oob", value: oobReefer, unit: "min", tone: oobReefer <= 15 ? "good" : oobReefer <= 60 ? "warn" : "bad" },
     { id: "q_in_band", value: reefers.length ? pct(inBandReefers, reefers.length) : 100, unit: "pct", tone: pct(inBandReefers, reefers.length) >= 95 || reefers.length === 0 ? "good" : "warn" },
     { id: "q_health", value: health, unit: "score", tone: health >= 80 ? "good" : health >= 60 ? "warn" : "bad" },
     { id: "q_excursions", value: typeCount(["temperature_critical", "reefer_setpoint"]), unit: "count", tone: typeCount(["temperature_critical", "reefer_setpoint"]) === 0 ? "good" : "bad" },
     { id: "q_forecast", value: typeCount(["health_forecast", "gas_high"]), unit: "count", tone: typeCount(["health_forecast", "gas_high"]) === 0 ? "good" : "warn" },
+    carrier, driverK,
   ] : persona === "security" ? [
     { id: "s_door", value: doorOpen, unit: "count", tone: doorOpen === 0 ? "good" : "bad" },
     { id: "s_lock", value: lockBreach, unit: "count", tone: lockBreach === 0 ? "good" : "bad" },
     { id: "s_deviation", value: typeCount(["route_deviation"]), unit: "count", tone: typeCount(["route_deviation"]) === 0 ? "good" : "warn" },
     { id: "s_stops", value: typeCount(["unscheduled_stop"]), unit: "count", tone: typeCount(["unscheduled_stop"]) === 0 ? "good" : "warn" },
+    carrier, driverK,
   ] : persona === "customer" ? [
     { id: "c_total", value: scope.length, unit: "count", tone: "neutral" },
     { id: "c_transit", value: active.length, unit: "count", tone: "neutral" },
     { id: "c_delayed", value: delayed.length, unit: "count", tone: delayed.length === 0 ? "good" : "warn" },
     { id: "c_delivered", value: done, unit: "count", tone: "good" },
+    carrier, driverK,
   ] : [
+    { id: "o_unowned", value: cases.oldestUnownedMin, unit: "min", tone: cases.oldestUnownedMin === 0 ? "good" : cases.oldestUnownedMin <= 60 ? "warn" : "bad" },
     { id: "o_transit", value: active.length, unit: "count", tone: "neutral" },
     { id: "o_ontime", value: onTimePct, unit: "pct", tone: onTimePct >= 90 ? "good" : onTimePct >= 75 ? "warn" : "bad" },
     { id: "o_delayed", value: delayed.length, unit: "count", tone: delayed.length === 0 ? "good" : "warn" },
     { id: "o_alarms", value: critical, unit: "count", tone: critical === 0 ? "good" : "bad" },
+    carrier, driverK,
   ];
 
   const corridorMap = new Map<string, { n: number; delayed: number }>();
@@ -175,22 +201,26 @@ export function analyticsFor(
     etaBuckets: ETA_BUCKETS.map((b) => ({ key: b, n: journeys.filter((j) => journeyStatus(j) !== "cancelled" && etaBucket(j, nowMs) === b).length })),
     cargoMix: countBy(scope, (c) => c.profileId),
     itsm: itsmStats(views),
+    cases,
+    people,
+    mro: { stages: WO_STAGES.map((k, i) => ({ key: k, n: wos.filter((w) => w.stage === i).length })), preventive: wos.filter((w) => w.kind === "preventive").length, reactive: wos.filter((w) => w.kind === "reactive").length },
+    devices: { total: issues.length, byReason: (["tracker_offline", "tracker_battery", "tracker_signal"] as const).map((k) => ({ key: k, n: issues.filter((i) => i.reason === k).length })), issues: issues.slice(0, 8) },
     empty: scope.length === 0,
   };
 }
 
 /* ---------- Reports ---------- */
 
-export type ReportId = "daily_ops" | "journey_otp" | "cold_chain" | "health_watch" | "security_incidents" | "sla_perf" | "shipment_status";
+export type ReportId = "daily_ops" | "journey_otp" | "cold_chain" | "health_watch" | "security_incidents" | "sla_perf" | "shipment_status" | "partner_scorecard" | "driver_scorecard";
 
 export const REPORTS: Record<Persona, ReportId[]> = {
-  operator: ["daily_ops", "journey_otp", "cold_chain", "sla_perf"],
-  quality: ["cold_chain", "health_watch"],
-  security: ["security_incidents", "sla_perf"],
-  customer: ["shipment_status", "journey_otp"],
+  operator: ["daily_ops", "journey_otp", "cold_chain", "sla_perf", "partner_scorecard", "driver_scorecard"],
+  quality: ["cold_chain", "health_watch", "partner_scorecard"],
+  security: ["security_incidents", "sla_perf", "driver_scorecard"],
+  customer: ["shipment_status", "journey_otp", "partner_scorecard"],
 };
 
-export type ColKind = "text" | "num" | "status" | "alert" | "cargo" | "jstatus" | "pct" | "min" | "sev";
+export type ColKind = "text" | "num" | "status" | "alert" | "cargo" | "jstatus" | "pct" | "min" | "sev" | "risk";
 export interface Col { key: string; kind: ColKind }
 export type Cell = string | number;
 export interface Report { id: ReportId; cols: Col[]; rows: Cell[][]; totals: Cell[] | null }
@@ -201,6 +231,8 @@ export interface ReportCtx {
   journeys: Journey[];
   tickets: Record<string, TicketRecord>;
   nowMs: number;
+  /** Partners and drivers, with any changes made in the app. Defaults to the seeded registry. */
+  registry?: Registry;
 }
 
 const route = (c: Container) => `${c.origin} → ${c.destination}`;
@@ -265,6 +297,20 @@ export function buildReport(id: ReportId, x: ReportCtx): Report {
     });
     const n = sum(rows, 1), br = sum(rows, 2);
     return { id, cols, rows, totals: ["", n, br, sum(rows, 3), pct(n - br, n)] };
+  }
+  if (id === "partner_scorecard") {
+    const cols: Col[] = [{ key: "partner", kind: "text" }, { key: "grade", kind: "text" }, { key: "score", kind: "num" }, { key: "containers", kind: "num" }, { key: "on_time", kind: "pct" }, { key: "compliance", kind: "text" }, { key: "alerts_100", kind: "num" }, { key: "safety", kind: "num" }, { key: "expired", kind: "num" }];
+    const pe = buildPeople(x.registry ?? seedRegistry(), x.scope, x.alerts, x.journeys);
+    const rows: Cell[][] = pe.partners.map((p) => [p.name, p.grade, p.score, p.containers, p.otp, p.cold === null ? "–" : `${p.cold}%`, p.alertsPer100, p.safety, p.expiredLicences]);
+    return { id, cols, rows, totals: null };
+  }
+  if (id === "driver_scorecard") {
+    const cols: Col[] = [{ key: "driver", kind: "text" }, { key: "partner", kind: "text" }, { key: "containers", kind: "num" }, { key: "events", kind: "num" }, { key: "score", kind: "num" }, { key: "risk", kind: "risk" }, { key: "licence_days", kind: "num" }];
+    const reg = x.registry ?? seedRegistry();
+    const pe = buildPeople(reg, x.scope, x.alerts, x.journeys);
+    const pname = new Map(reg.partners.map((p) => [p.id, p.name]));
+    const rows: Cell[][] = pe.drivers.slice(0, 100).map((d) => [d.name, pname.get(d.partnerId) ?? "", d.containers, d.events30, d.score, d.band, d.licenceDays]);
+    return { id, cols, rows, totals: null };
   }
   const cols: Col[] = [{ key: "container", kind: "text" }, { key: "cargo", kind: "cargo" }, { key: "route", kind: "text" }, { key: "temp", kind: "num" }, { key: "status", kind: "status" }, { key: "eta", kind: "text" }];
   const jm = new Map(x.journeys.map((j) => [j.containerId, j]));
