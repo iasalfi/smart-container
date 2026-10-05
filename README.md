@@ -41,6 +41,8 @@ Errors are JSON: `{"error":{"code":"container_not_found","message":"..."}}` with
 
 **Journey operations (`/operations/`).** A board of journeys by status, a five-step wizard to on-board a load (customer, cargo, container, seal, truck, driver) and plan the route, and a journey page. The planner (`packages/domain/src/journey.ts`) adds pitstops from driving rules: a 45 minute rest after 4.5 hours at the wheel, a fuel stop every 650 km, an overnight rest after 9 hours of driving a day, plus a pre-trip temperature check for reefers, port gate and customs steps for port cities, waypoints for stops on the way, and warnings for a missed deadline, a night departure and long reefer hauls. Each journey has milestones with planned and actual times; logging a milestone with a delay moves the estimated arrival and marks the journey Delayed past 30 minutes. Every one of the 1,000 containers has a journey (926 in transit, 71 delayed, two planned, one completed), so the board always adds up to the fleet. Each column shows 12 cards and a Show all button. Journeys created in the wizard are kept in the browser.
 
+**Analytics (`/analytics/`) and Reports (`/reports/`).** Both follow the "View as" persona, which stands in for the signed-in user (the demo has no real login). The shared logic is `packages/domain/src/analytics.ts`. The operator gets journey delays, corridor load and service desk health; the quality manager gets cold chain compliance, cargo health and temperature alerts; the security officer gets doors, locks, route deviations and unscheduled stops; a customer gets arrivals, status and cargo mix for its own containers only. Each persona has its own four KPIs and its own report catalogue (daily operations, journey on-time, cold chain, health watch list, security incidents, service level, shipment status). A report can be filtered by cargo and text, printed, or exported as CSV (UTF-8 with a byte order mark so Excel reads Arabic). The Fleet dashboard has a persona strip with the same KPIs, and its alert-type chart and side panel follow the persona too.
+
 ## Run it locally
 
 ```bash
@@ -53,7 +55,7 @@ Or both in containers: `docker compose up --build` (web on 8080, API on 4100).
 
 ## Tests
 
-The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 273 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
+The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 293 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
 
 | Command | What it runs |
 |---|---|
