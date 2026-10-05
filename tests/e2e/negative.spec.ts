@@ -76,7 +76,7 @@ test.describe("Negative: bad input, missing data, blocked actions", () => {
   test("TC-E-058 Customer cannot open another customer's container or Admin @negative", async ({ page }) => {
     await openFleet(page);
     await setPersona(page, "customer");
-    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Alerts" }).click();
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Cases" }).click();
     await page.goto("/container/?id=SC-1043");
     await setPersona(page, "customer");
     await expect(page.getByTestId("not-found")).toBeVisible();
@@ -85,7 +85,7 @@ test.describe("Negative: bad input, missing data, blocked actions", () => {
   });
 
   test("TC-E-059 Close is disabled until the alert is resolved, Acknowledge disabled after it is done @negative", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = page.getByTestId("alert-row").first();
     await expect(row.getByTestId("close-btn")).toBeDisabled();
     await expect(row.getByTestId("ack-btn")).toBeEnabled();
@@ -107,7 +107,7 @@ test.describe("Negative: bad input, missing data, blocked actions", () => {
   });
 
   test("TC-E-062 Alert search with no match shows an empty state @negative", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await page.getByTestId("alert-search").fill("SC-0000");
     await expect(page.getByTestId("alerts-empty")).toBeVisible();
     await expect(page.getByTestId("alert-row")).toHaveCount(0);
