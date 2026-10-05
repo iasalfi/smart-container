@@ -5,7 +5,7 @@ import { useApp } from "@/app/providers";
 import type { Container, Status } from "@/lib/types";
 import { ContainerIcon } from "./Art";
 
-export const STATUS_COLOR: Record<Status, string> = { normal: "#3BA55D", warning: "#F2A541", critical: "#D64545" };
+export const STATUS_COLOR: Record<Status, string> = { normal: "#6fa585", warning: "#dcae5f", critical: "#c9695d" };
 
 export function StatusPill({ status }: { status: Status }) {
   const { t } = useApp();
@@ -14,11 +14,11 @@ export function StatusPill({ status }: { status: Status }) {
 
 export function Gauge({ value, label }: { value: number; label: string }) {
   const r = 38, c = 2 * Math.PI * r;
-  const color = value >= 80 ? "#3BA55D" : value >= 55 ? "#F2A541" : "#D64545";
+  const color = value >= 80 ? "#6fa585" : value >= 55 ? "#dcae5f" : "#c9695d";
   return (
     <div className="gauge" role="img" aria-label={`${label} ${Math.round(value)}`} data-testid="health-gauge">
       <svg viewBox="0 0 100 100" width="120" height="120">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="#E3E9EF" strokeWidth="11" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="#e7e2d6" strokeWidth="11" />
         <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="11" strokeLinecap="round" strokeDasharray={`${(c * value) / 100} ${c}`} transform="rotate(-90 50 50)" />
         <text x="50" y="58" textAnchor="middle" fontSize="26" fontWeight="700" fill={color}>{Math.round(value)}</text>
       </svg>
