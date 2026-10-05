@@ -85,7 +85,7 @@ export default function ReportsPage() {
           </div>
           <p className="muted small" aria-live="polite" data-testid="rep-count">{rows.length > PAGE ? t("rep_showing", { s: Math.min(limit, rows.length), n: rows.length.toLocaleString("en-US") }) : t("rep_rows", { n: rows.length })}</p>
           {rows.length === 0 ? <p className="state-inline" role="status" data-testid="rep-empty">{t("rep_empty")}</p> : (
-            <div className="table-wrap"><table className="table" data-testid="rep-table">
+            <div className="table-wrap" tabIndex={0} role="region" aria-label="Report table"><table className="table" data-testid="rep-table">
               <thead><tr>{report.cols.map((c) => <th key={c.key} scope="col">{label(c)}</th>)}</tr></thead>
               <tbody>
                 {rows.slice(0, limit).map((r, i) => (<tr key={i} data-testid="rep-row">{r.map((v, k) => <td key={k}>{show(v, report.cols[k])}</td>)}</tr>))}
