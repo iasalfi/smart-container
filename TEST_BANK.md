@@ -307,7 +307,7 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 | TC-U-113 | On-boarding | negative | FR-61 | bad container IDs, plates, seals and phone numbers are named | Validate bad IDs, plates, seals, phones and duplicates | Each problem is named |
 | TC-U-114 | On-boarding | negative | FR-61 | reefer cargo needs a set point inside its band and dry cargo does not | Validate reefer set points and dry cargo | Missing and out of band set points are refused, dry cargo needs none |
 | TC-U-115 | On-boarding | regression | FR-61 | journey IDs continue from the highest one in use | Create journey IDs and build a journey from a form | IDs continue from the highest and values are normalised |
-| TC-U-116 | Journeys | regression | FR-60 | live fleet trips become journeys with a matching status and progress | Seed journeys from the live fleet | At least ten journeys, eight on the road, two planned and one completed |
+| TC-U-116 | Journeys | regression | FR-60 | every container in the fleet has a journey, with a matching status and progress | Seed journeys from the live fleet | 1,000 journeys, one per container, 997 on the road, two planned, one completed and the offline devices delayed |
 
 ## End-to-end: alert and alarm management (ITSM)
 
@@ -335,14 +335,14 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 
 | ID | Area | Suite | Ref | Case | Steps | Expected result |
 |---|---|---|---|---|---|---|
-| TC-E-146 | Operations | regression | FR-60 | The Operations page lists 11 journeys on a board with a count for each status | Open Operations from the menu | 11 journeys across Planned 2, In transit 6, Delayed 2, Completed 1 |
+| TC-E-146 | Operations | regression | FR-60 | The Operations page puts all 1,000 containers on a journey board with a count for each status | Open Operations from the menu, then show all in transit journeys | 1,000 journeys: Planned 2, In transit 926, Delayed 71, Completed 1, and each column lists only 12 cards until Show all |
 | TC-E-147 | Operations | regression | FR-60 | Searching the board by container, journey or customer narrows the cards | Search the board | Cards narrow and an empty state shows for no match |
 | TC-E-148 | Operations | regression | FR-60 | A journey page shows the road, load details, key figures and the milestone list | Open a journey | Road, load details, key figures and milestones from loading to delivery |
 | TC-E-149 | Operations | progression | FR-60 | Logging the next milestone with a delay updates the delay, the estimated arrival and the row | Log milestones with a 20 minute delay and reload | Status, delay and estimated arrival update and persist |
 | TC-E-150 | Operations | progression | FR-60 | A delay of more than 30 minutes marks the journey Delayed and it moves to the Delayed column | Log a 45 minute delay | The journey is Delayed and sits in the Delayed column |
 | TC-E-151 | Operations | progression | FR-60 | A rest or fuel stop can be skipped and is shown as skipped | Skip the fuel stop | The stop is marked skipped and the next milestone moves on |
 | TC-E-152 | Operations | progression | FR-60 | Cancelling a journey asks first and then marks it cancelled | Cancel a journey, first keep it, then confirm | The journey is cancelled and logging is gone |
-| TC-E-153 | On-boarding | progression | FR-61 | A new load can be on-boarded, planned and dispatched in five steps, and it stays after a reload | Fill the five steps and dispatch | J-1012 is created, listed with its assets and kept after a reload |
+| TC-E-153 | On-boarding | progression | FR-61 | A new load can be on-boarded, planned and dispatched in five steps, and it stays after a reload | Fill the five steps and dispatch | J-2001 is created, listed with its assets and kept after a reload |
 | TC-E-154 | On-boarding | negative | FR-61 | The first step names what is missing and does not move on | Press Next on the empty first step | The missing fields are named and the step stays |
 | TC-E-155 | On-boarding | negative | FR-61 | A container ID or plate that is already in use is refused | Use a container ID and a plate that exist | Both are refused as already in use |
 | TC-E-156 | On-boarding | negative | FR-61 | A set point outside the cargo's safe band is refused | Enter a set point of 14 for dairy | The set point is refused until it is back in band |
@@ -356,4 +356,4 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 | TC-E-164 | A11y Operations | regression | NFR-12 | Operations pages have no serious accessibility violations @regression @a11y | Scan the board, assets, a journey and the plan step | No serious or critical violations |
 | TC-E-165 | Operations | regression | NFR-13 | Operations work in Arabic with right to left layout | Switch Operations to Arabic | Arabic labels, right to left layout and Arabic error text |
 | TC-E-166 | Operations | regression | NFR-11 | Operations pages fit a phone without sideways scrolling | Open the three Operations pages at 390 px | No sideways scrolling |
-| TC-E-167 | UI | regression | NFR-10 | The theme is a dull pastel palette of sand, sage and dusty teal with a light top bar | Read the theme tokens and the top bar colour | Sand background, dusty teal, a light top bar and the hero gradient, with no old navy or blue |
+| TC-E-167 | UI | regression | NFR-10 | The theme is a soft grey-blue canvas with a dark navy sidebar, a white top bar and an indigo accent | Read the theme tokens, the sidebar and the top bar colours | Grey-blue background, indigo accent, dark sidebar, white top bar and the hero gradient, with no old navy, blue or sand |
