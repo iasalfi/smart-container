@@ -68,13 +68,16 @@ export function Tabs({ id, current }: { id: string; current: string }) {
 }
 
 export function ContainerHead({ c }: { c: Container }) {
-  const { t } = useApp();
+  const { t, registry } = useApp();
+  const drv = registry.drivers.find((d) => d.id === (registry.assignments[c.id] ?? c.driverId));
+  const partner = registry.partners.find((p) => p.id === (drv?.partnerId ?? c.partnerId));
   return (
     <div className="chead">
       <ContainerIcon status={c.status} reefer={c.reefer} size={72} led />
       <div>
         <h1 data-testid="container-title">{c.id}</h1>
         <p className="muted">{c.origin} → {c.destination} · {c.tripId}</p>
+        <p className="muted small" data-testid="head-people">{t("driver")}: {drv?.name ?? c.driver} · {t("pp_carrier")}: {partner?.name ?? "–"}</p>
       </div>
       <StatusPill status={c.status} />
       {!c.online ? <span className="pill pill-offline">{t("status_offline")}</span> : null}
