@@ -159,3 +159,167 @@ test.describe("Freight partners and drivers", () => {
   });
 
   test("TC-E-209 Assigning to a container that does not exist, or with no driver chosen, is refused @negative", async ({ page }) => {
+    await openPartners(page);
+    await tab(page, "assign");
+    await page.getByTestId("af-container").fill("SC-9999");
+    await page.getByTestId("af-save").click();
+    await expect(page.getByTestId("pp-errors")).toContainText(/container/i);
+    await page.getByTestId("af-container").fill("SC-1060");
+    await page.getByTestId("af-save").click();
+    await expect(page.getByTestId("pp-errors")).toBeVisible();
+    await expect(page.getByTestId("detail-driver")).toHaveCount(0);
+  });
+
+  test("TC-E-210 A customer cannot open the partner and maintenance pages @negative", async ({ page }) => {
+    await page.goto("/");
+    await setPersona(page, "customer");
+    const nav = page.getByRole("navigation", { name: "Main" });
+    await expect(nav.getByRole("link", { name: "Partners and drivers" })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Maintenance" })).toHaveCount(0);
+    for (const url of ["/partners/", "/maintenance/"]) {
+      await page.goto(url);
+      await setPersona(page, "customer");
+      await expect(page.getByTestId("not-found")).toContainText("Not available");
+    }
+  });
+
+  test("TC-E-211 Quality and security can read the partner records but cannot change them @negative", async ({ page }) => {
+    for (const p of ["quality", "security"] as const) {
+      await page.goto("/partners/");
+      await setPersona(page, p);
+      await expect(page.getByTestId("pp-readonly")).toBeVisible();
+      await expect(page.getByTestId("pp-add-partner")).toHaveCount(0);
+      await expect(page.getByTestId("pp-edit-partner")).toHaveCount(0);
+      await tab(page, "drivers");
+      await expect(page.getByTestId("pp-add-driver")).toHaveCount(0);
+      await expect(page.getByTestId("pp-log-event")).toHaveCount(0);
+      await tab(page, "assign");
+      await expect(page.getByTestId("af-save")).toBeDisabled();
+    }
+  });
+
+  test("TC-E-212 Admin can remove a partner with no containers but not one that still carries them @negative", async ({ page }) => {
+    await page.goto("/admin/");
+    await expect(page.getByTestId("admin-registry")).toBeVisible();
+    const reg = page.getByTestId("admin-registry");
+    await expect(reg.getByTestId("pp-partner-row").first()).toBeVisible();
+    await reg.getByTestId("pp-remove-partner").first().click();
+    await reg.getByTestId("pp-confirm-remove").click();
+    await expect(reg.getByTestId("pp-msg")).toContainText(/still carries/i);
+    await expect(reg.getByTestId("pp-partner-row")).toHaveCount(8);
+    await reg.getByTestId("pp-add-partner").click();
+    await reg.getByTestId("pf-name").fill("Gulf Road Haulage");
+    await reg.getByTestId("pf-contact").fill("Omar Said");
+    await reg.getByTestId("pf-phone").fill("0501234567");
+    await reg.getByTestId("pf-save").click();
+    await expect(reg.getByTestId("pp-partner-row")).toHaveCount(9);
+    await reg.getByTestId("pp-partner-row").filter({ hasText: "Gulf Road Haulage" }).getByTestId("pp-remove-partner").click();
+    await reg.getByTestId("pp-confirm-remove").click();
+    await expect(reg.getByTestId("pp-msg")).toContainText(/removed/i);
+    await expect(reg.getByTestId("pp-partner-row")).toHaveCount(8);
+  });
+});
+
+test.describe("Cases and maintenance", () => {
+  test("TC-E-213 The alerts page opens on cases, which are fewer than the alarms behind them, and the toggle shows every alarm @regression", async ({ page }) => {
+    await page.goto("/alerts/");
+    await expect(page.getByTestId("cases-view")).toBeVisible();
+    const cases = await page.getByTestId("case-row").count();
+    expect(cases).toBeGreaterThan(0);
+    expect(cases).toBeLessThan(102);
+    await expect(page.getByTestId("cases-count")).toContainText("102");
+    expect(await page.getByTestId("case-merged").count()).toBeGreaterThan(0);
+    await expect(page.getByTestId("case-row").first().getByTestId("case-prio")).toHaveText(/P[12]/);
+    await page.getByTestId("view-alarms").click();
+    await expect(page.getByTestId("alert-row")).toHaveCount(102);
+    await page.getByTestId("view-cases").click();
+    await expect(page.getByTestId("cases-view")).toBeVisible();
+  });
+
+  test("TC-E-214 Cases can be searched by container and each one shows how late the response and fix are @regression", async ({ page }) => {
+    await page.goto("/alerts/");
+    const first = page.getByTestId("case-row").first();
+    const cid = (await first.getAttribute("data-container"))!;
+    await page.getByTestId("case-search").fill(cid);
+    await expect(page.getByTestId("case-row")).toHaveCount(1);
+    await page.getByTestId("case-search").fill("SC-0000");
+    await expect(page.getByTestId("cases-empty")).toBeVisible();
+    await page.getByTestId("case-search").fill("");
+    expect(await page.getByTestId("case-resp-breach").count()).toBeGreaterThan(0);
+    expect(await page.getByTestId("case-res-breach").count()).toBeGreaterThan(0);
+  });
+
+  test("TC-E-215 Taking a case makes you its owner and moves it off the unassigned list, and resolving it closes it @progression", async ({ page }) => {
+    await page.goto("/alerts/");
+    const row = page.getByTestId("case-row").first();
+    const id = (await row.getAttribute("data-id"))!;
+    await row.getByTestId("case-take").click();
+    const mine = page.locator(`[data-testid="case-row"][data-id="${id}"]`);
+    await expect(mine.getByTestId("case-owner")).toContainText("you");
+    await expect(mine.getByTestId("case-take")).toHaveCount(0);
+    await mine.getByTestId("case-resolve").click();
+    await expect(mine).toHaveCount(0);
+    await page.getByTestId("case-show-done").check();
+    await expect(page.locator(`[data-testid="case-row"][data-id="${id}"]`)).toHaveAttribute("data-state", "resolved");
+    await page.getByTestId("view-alarms").click();
+    await expect(page.getByTestId("itsm-unassigned")).not.toContainText("102");
+  });
+
+  test("TC-E-216 A case that needs a repair opens a work order, which moves across the board and releases the container @progression", async ({ page }) => {
+    await page.goto("/alerts/");
+    const row = page.getByTestId("case-row").filter({ has: page.getByTestId("case-wo-open") }).first();
+    const id = (await row.getAttribute("data-id"))!;
+    const cid = (await row.getAttribute("data-container"))!;
+    await row.getByTestId("case-wo-open").click();
+    const same = page.locator(`[data-testid="case-row"][data-id="${id}"]`);
+    await expect(same).toHaveAttribute("data-state", "in_mro");
+    await expect(same.getByTestId("case-wo")).toBeVisible();
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Maintenance" }).click();
+    const card = page.locator(`[data-testid="mt-card"]`).filter({ hasText: cid });
+    await expect(card).toHaveCount(1);
+    await expect(page.getByTestId("mt-col-triage")).toContainText(cid);
+    const stages = ["diagnose", "repair", "test", "ready"];
+    for (const s of stages) {
+      await card.getByTestId("mt-advance").click();
+      await expect(page.getByTestId(`mt-col-${s}`)).toContainText(cid);
+    }
+    await card.getByTestId("mt-release").click();
+    await expect(card).toHaveCount(0);
+    await expect(page.getByTestId("mt-k-released")).toContainText("1");
+    await page.goto("/alerts/");
+    await page.getByTestId("case-show-done").check();
+    await expect(page.locator(`[data-testid="case-row"][data-id="${id}"]`)).toHaveAttribute("data-state", "resolved");
+  });
+
+  test("TC-E-217 The maintenance board shows example orders in several stages and a list of trackers that need a visit @regression", async ({ page }) => {
+    await page.goto("/maintenance/");
+    await expect(page.getByTestId("mt-board")).toBeVisible();
+    const total = await page.getByTestId("mt-card").count();
+    expect(total).toBeGreaterThanOrEqual(3);
+    let filled = 0;
+    for (const s of ["triage", "diagnose", "repair", "test", "ready"]) if ((await page.getByTestId(`mt-col-${s}`).getByTestId("mt-card").count()) > 0) filled++;
+    expect(filled).toBeGreaterThanOrEqual(3);
+    await expect(page.getByTestId("mt-k-open")).toContainText(String(total));
+    expect(await page.getByTestId("mt-dev-row").count()).toBeGreaterThan(0);
+    await expect(page.getByTestId("mt-k-preventive")).toContainText("%");
+  });
+
+  test("TC-E-218 A tracker that needs a visit gets a preventive work order once, and the share of preventive work goes up @progression", async ({ page }) => {
+    await page.goto("/maintenance/");
+    const open = Number((await page.getByTestId("mt-k-open").innerText()).match(/\d+/)![0]);
+    const row = page.getByTestId("mt-dev-row").filter({ has: page.getByTestId("mt-raise") }).first();
+    const cid = (await row.locator("th a").innerText()).trim();
+    await row.getByTestId("mt-raise").click();
+    await expect(page.getByTestId("mt-k-open")).toContainText(String(open + 1));
+    await expect(page.getByTestId("mt-col-triage").locator(`[data-testid="mt-card"]`).filter({ hasText: cid })).toHaveCount(1);
+    await expect(page.getByTestId("mt-dev-row").filter({ hasText: cid }).getByTestId("mt-raise")).toHaveCount(0);
+    await expect(page.getByTestId("mt-dev-row").filter({ hasText: cid })).toContainText(/open/i);
+  });
+
+  test("TC-E-219 Quality and security can see the board but cannot move orders or raise new ones @negative", async ({ page }) => {
+    await page.goto("/maintenance/");
+    await setPersona(page, "quality");
+    await expect(page.getByTestId("mt-readonly")).toBeVisible();
+    await expect(page.getByTestId("mt-advance")).toHaveCount(0);
+    await expect(page.getByTestId("mt-raise")).toHaveCount(0);
+    await page.goto("/alerts/");
