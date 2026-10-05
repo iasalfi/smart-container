@@ -36,7 +36,7 @@ export async function axeSerious(page: Page) {
 
 export const PAGES: { name: string; url: string }[] = [
   { name: "Fleet", url: "/" },
-  { name: "Alerts", url: "/alerts/" },
+  { name: "Alerts", url: "/alerts/?view=alarms" },
   { name: "Container detail", url: "/container/?id=SC-1060" },
   { name: "Route", url: "/route/?id=SC-1075" },
   { name: "Cargo health", url: "/health/?id=SC-1060" },
