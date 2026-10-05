@@ -25,6 +25,11 @@ export interface Container {
   reefer: boolean;
   plate: string;
   driver: string;
+  /** Registry ids of the driver and the freight company partner that provides the truck. */
+  driverId: string;
+  partnerId: string;
+  /** Minutes outside the cargo temperature band in the last 24 hours. */
+  outOfBandMin: number;
   customer: string;
   tripId: string;
   routeId: string;
