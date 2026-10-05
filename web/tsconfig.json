@@ -39,7 +39,7 @@
     "node_modules",
     "out",
     ".next",
-    "scripts", 
+    "scripts",
     "tests"
   ]
 }
