@@ -34,7 +34,7 @@ test.describe("Microservice boundary: web UI and API service", () => {
 
   test("TC-E-103 Alerts shows an error state when the API answers 500 @negative", async ({ page }) => {
     await page.route("**/api/v1/alerts**", (r) => r.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: { code: "internal_error", message: "Unexpected error." } }) }));
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await expect(page.getByTestId("api-error")).toBeVisible();
     await expect(page.getByTestId("alert-row")).toHaveCount(0);
   });
