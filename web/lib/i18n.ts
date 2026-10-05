@@ -1,6 +1,7 @@
 import type { Lang } from "./types";
 import { arItsm, enItsm } from "./i18n-itsm";
 import { arOps, enOps } from "./i18n-ops";
+import { arAn, enAn } from "./i18n-analytics";
 
 export const en = {
   app_name: "Smart Container Monitoring",
@@ -267,6 +268,7 @@ export const en = {
   alerts_sum_done: "Handled",
   ...enItsm,
   ...enOps,
+  ...enAn,
 } as const;
 
 export type Key = keyof typeof en;
@@ -536,6 +538,7 @@ export const ar: Record<Key, string> = {
   alerts_sum_done: "تمت معالجتها",
   ...arItsm,
   ...arOps,
+  ...arAn,
 };
 
 export const dictionaries: Record<Lang, Record<Key, string>> = { en: en as unknown as Record<Key, string>, ar };
