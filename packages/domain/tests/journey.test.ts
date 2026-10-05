@@ -178,17 +178,24 @@ describe("on-boarding", () => {
 });
 
 describe("seed journeys", () => {
-  it("TC-U-116 live fleet trips become journeys with a matching status and progress", async () => {
+  it("TC-U-116 every container in the fleet has a journey, with a matching status and progress", async () => {
     const { getFleet } = await import("../src/fleet");
     const { seedJourneys } = await import("../src/journey");
     const js = seedJourneys(getFleet());
-    expect(js.length).toBeGreaterThanOrEqual(10);
+    const fleet = getFleet();
+    expect(js.length).toBe(1000);
+    expect(new Set(js.map((j) => j.containerId))).toEqual(new Set(fleet.map((c) => c.id)));
     expect(new Set(js.map((j) => j.id)).size).toBe(js.length);
     expect(new Set(js.map((j) => j.containerId)).size).toBe(js.length);
     const statuses = js.map(journeyStatus);
     expect(statuses).toContain("planned");
     expect(statuses).toContain("completed");
-    expect(statuses.filter((s) => s === "in_transit" || s === "delayed").length).toBe(8);
+    expect(statuses.filter((s) => s === "in_transit" || s === "delayed").length).toBe(997);
+    expect(statuses.filter((s) => s === "planned").length).toBe(2);
+    expect(statuses.filter((s) => s === "completed").length).toBe(1);
+    expect(statuses.filter((s) => s === "delayed").length).toBeGreaterThan(30);
+    const offline = new Set(fleet.filter((c) => !c.online).map((c) => c.id));
+    expect(js.filter((j) => offline.has(j.containerId)).every((j) => journeyStatus(j) === "delayed")).toBe(true);
     for (const j of js) {
       expect(validateOnboarding({ containerId: "SC-9999", plate: j.plate, sealNo: j.sealNo, profileId: j.profileId, setpointC: j.setpointC, customer: j.customer, driverName: j.driverName, driverPhone: j.driverPhone }, { containers: [], plates: [] })).toEqual([]);
     }
