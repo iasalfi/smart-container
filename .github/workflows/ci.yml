@@ -1,0 +1,904 @@
+BRD: Smart Container Tracking & Cargo Health Monitoring (KSA Road)
+Oct 5, 2026 · @Imran
+1. Document control and purpose
+This BRD defines what a road-container monitoring solution for Saudi Arabia must do, so that one source drives three deliverables: a technical and commercial PowerPoint proposal, a demo web app running on synthetic data, and later the detailed design. Prices are left as placeholders for the submitting party to fill in.
+Item
+Detail
+Document
+Business Requirements Document (BRD)
+Solution
+Smart container tracking and cargo health monitoring, road transport within KSA
+Version
+0.1 draft, 5 October 2026
+Prepared by
+Imran (submitting party)
+Audience
+Submitter bid team, customer sponsors (logistics, cold chain, port and shipping operators), solution architects, demo developers
+Feeds
+Proposal deck (section 11), demo web app (section 10), commercial annex (section 13)
+Requirement IDs
+BR = business, FR = functional, NFR = non-functional, DM = demo; each carries a priority (M = must, S = should, O = optional)
+2. Executive summary and business context
+Shippers and carriers in Saudi Arabia move high-value and perishable cargo over long road distances, often 800 to 1,500 km between Jeddah, Riyadh, Dammam and the northern and southern borders, in summer ambient temperatures above 45 °C. Today most operators know where the truck is, but not what is happening inside the container: whether the reefer held its set point, whether humidity spoiled dry goods, whether the doors were opened at a roadside stop, or whether the load is off-gassing.
+The proposed solution puts a sensor and tracking unit inside each container and a cloud platform behind it. It reports position, temperature, humidity and door state in near real time, flags deviations from the planned route, and scores the likely health of the cargo using machine-learning logic on the temperature and humidity history. Gas sensing for ammonia (NH3) and hydrogen sulphide (H2S) and a smart padlock are offered as options for spoilage-prone and high-security loads.
+What the customer gets:
+• Fewer rejected consignments, because excursions are caught while the truck can still be rerouted or the reefer serviced.
+• Evidence for claims and disputes: a time-stamped, tamper-evident record of conditions and door events from loading to delivery.
+• Lower theft and pilferage exposure, through door-open alerts and unscheduled-stop detection.
+• One screen for operations, with fleet, route and cargo condition together.
+Assumed customer segments: food and pharma cold chain, FMCG and retail distribution, port-to-warehouse container haulage, and fresh produce and meat importers. The segment list should be confirmed against the target account before the deck is finalised.
+3. Objectives and scope
+The solution has to make every road-moving container in the customer's fleet visible and accountable from gate-out to delivery.
+Objectives
+1. Give operations a live position and condition view of 100% of equipped containers, with data no older than 60 seconds while moving.
+2. Detect temperature, humidity, door and (optionally) gas excursions and alert the right person within 2 minutes of the event.
+3. Show planned versus actual route, and classify every stop as scheduled or unscheduled.
+4. Estimate remaining cargo shelf-life and spoilage risk from the sensor history.
+5. Produce a delivery-time condition report that can be attached to a claim, a customs query or a customer SLA review.
+Area
+In scope
+Optional
+Out of scope
+Tracking
+Cellular router position, speed, heading, trip history on KSA roads; dry and reefer containers
+Geofence-based ETA to port and warehouse
+Rail, sea and air legs; cross-border GCC tracking in phase 1
+Sensing
+Temperature, humidity, door open/close from inside the container
+NH3 and H2S gas sensing; smart padlock with remote lock/unlock
+Changing reefer set points from the platform, cargo weight, shock and tilt
+Analytics
+Cargo monitoring, route monitoring, ML cargo health score
+Predictive ETA, driver behaviour scoring
+Full transport management system (TMS) functions
+Delivery
+Web platform, alerts by e-mail, SMS and push, REST API
+Native mobile app, WhatsApp alerts
+Hardware manufacturing; sensors are either supplied by the supplier from certified partners or sourced by the customer
+Demo
+Web app on synthetic data covering all in-scope and optional features
+n/a
+Live device connectivity in the demo
+Success measures are listed in section 15.
+4. Stakeholders and personas
+Six roles use the platform. The demo app should let a viewer switch between them to see how the same data serves each.
+Persona
+Primary need
+Typical actions in the platform
+Control room operator
+Know instantly which containers need attention
+Watch live map, acknowledge alerts, call driver, escalate
+Logistics / fleet manager
+Keep trips on plan and on SLA
+Review route deviations, stop reports, trip KPIs
+Quality / cold-chain manager
+Prove the cargo stayed within spec
+Review temperature and humidity curves, cargo health score, release or reject cargo
+Security officer
+Detect tampering and theft
+Review door events, unscheduled stops, padlock log
+Customer / consignee
+See where the shipment is and its condition
+Read-only shared tracking link, delivery condition report
+Platform administrator
+Keep the system running
+Onboard devices, set thresholds, manage users, API keys
+External parties: the container or reefer lessor, the port or terminal operator, the telecom operator providing connectivity, and the device manufacturer.
+5. Business requirements
+These are the outcomes the customer is buying. Each traces to the functional requirements in sections 6 and 7.
+ID
+Business requirement
+Priority
+Traces to
+BR-01
+Know the location of every container in transit at any time
+M
+FR-01 to FR-05
+BR-02
+Keep temperature-sensitive cargo within its specified range and prove it
+M
+FR-06 to FR-09, FR-30 to FR-34
+BR-03
+Protect cargo from moisture damage and condensation
+M
+FR-10 to FR-12
+BR-04
+Detect unauthorised access to the container during transit
+M
+FR-13 to FR-16
+BR-05
+Detect early spoilage gases in fresh and chilled cargo
+O
+FR-17 to FR-20
+BR-06
+Prevent theft and tampering with remote lock control
+O
+FR-21 to FR-24
+BR-07
+Monitor cargo status for each trip on one screen
+M
+FR-25 to FR-29
+BR-08
+See planned versus actual route, and every stop classified as scheduled or not
+M
+FR-35 to FR-40
+BR-09
+Predict cargo health and act before the load is spoiled
+M
+FR-41 to FR-46
+BR-10
+Notify the right person quickly, without alert fatigue
+M
+FR-47 to FR-50
+BR-11
+Provide an auditable delivery report for claims and SLAs
+S
+FR-51 to FR-53
+BR-12
+Integrate with existing TMS, ERP and customer portals
+S
+FR-54 to FR-55
+BR-13
+Keep data in the Kingdom and meet KSA regulatory rules
+M
+NFR-05 to NFR-08
+BR-14
+Operate reliably across areas of weak coverage on desert highways
+M
+FR-56, NFR-01 to NFR-04
+BR-15
+Cover reefer containers as well as dry boxes, including whether the reefer holds its set point
+M
+FR-57 to FR-61
+BR-16
+Let the customer source the sensors itself or buy them from the supplier, with a 1-year warranty on supplied hardware
+M
+FR-62, FR-63, section 13
+6. Core functional requirements: device and sensing
+The in-container unit (called the "device" below) carries the sensors, a cellular router for tracking, and a battery. Requirements are grouped by capability.
+Real-time tracking
+ID
+Requirement
+Priority
+FR-01
+Device reports position, speed and heading through the cellular router at a configurable interval: 30 seconds by default, with 5 minutes recommended to extend battery life
+M
+FR-02
+Position accuracy follows the cellular router tracking method and is stated in the device specification; last known position kept when cellular signal is lost
+M
+FR-03
+Live map shows all containers with status colour (normal, warning, critical, offline) and refreshes within 10 seconds of data arrival
+M
+FR-04
+Trip history replay with speed, stops and sensor overlays for any past trip
+M
+FR-05
+Search and filter by container ID, trip, truck plate, driver, customer, status
+M
+Temperature
+ID
+Requirement
+Priority
+FR-06
+Measure internal air temperature from −30 °C to +70 °C, accuracy ±0.5 °C
+M
+FR-07
+Support one internal probe as standard; two or more probes (door, middle, rear) as an option
+S
+FR-08
+Per-trip temperature band (for example 2 to 8 °C chilled, −18 °C frozen, 15 to 25 °C ambient controlled) with warning and critical thresholds
+M
+FR-09
+Log every reading in the device; upload on schedule and on every threshold breach
+M
+Humidity
+ID
+Requirement
+Priority
+FR-10
+Measure relative humidity 0 to 100% RH, accuracy ±3% RH
+M
+FR-11
+Per-trip humidity band with warning and critical thresholds
+M
+FR-12
+Dew-point and condensation-risk indicator calculated from temperature and humidity
+S
+Container door lock and unlock sensing (from inside the container)
+ID
+Requirement
+Priority
+FR-13
+Sensor mounted inside the container detects door open and closed, and the locking-bar position (locked or unlocked)
+M
+FR-14
+Every door event is time-stamped with position, and sent immediately, not on the next scheduled upload
+M
+FR-15
+Door-open while the truck is moving, or outside a geofenced loading or delivery point, raises a critical alert
+M
+FR-16
+Device resists tampering: light sensor or enclosure switch flags removal, and a tamper alert is sent
+S
+Optional: gas sensing (NH3 and H2S)
+ID
+Requirement
+Priority
+FR-17
+Electrochemical sensors for NH3 (0 to 100 ppm) and H2S (0 to 50 ppm) fitted in an add-on module
+O
+FR-18
+Configurable warning and critical thresholds per cargo type
+O
+FR-19
+Gas readings plotted with temperature and humidity to support spoilage and refrigerant-leak detection
+O
+FR-20
+Sensor drift and end-of-life flagged; calibration due date tracked
+O
+Optional: smart padlock
+ID
+Requirement
+Priority
+FR-21
+Electronic padlock on the door hasp reports locked, unlocked and cut states
+O
+FR-22
+Remote lock and unlock from the platform, with role-based permission and a reason code
+O
+FR-23
+Time-limited one-time unlock codes for the consignee, valid only inside the delivery geofence
+O
+FR-24
+Full audit trail: who unlocked, from where, when, by which method
+O
+Hardware specification and sourcing
+The table sets out what a compliant device must provide, whether the customer sources it or the supplier provides it. Make and model are named in the technical proposal once the device partner is confirmed.
+Component
+Key specification
+Fitment
+Tracking unit (cellular router)
+Report interval configurable (30 s default, 5 min recommended for battery life); position accuracy per device specification; 7-day buffer; IP67; −30 to +70 °C
+Standard
+Temperature sensor
+−30 to +70 °C, ±0.5 °C; one internal probe, more probes optional
+Standard
+Humidity sensor
+0 to 100% RH, ±3% RH
+Standard
+Door and lock-bar sensor
+Mounted inside the container; open or closed, and locking-bar position; events sent immediately
+Standard
+Gas module
+Electrochemical NH3 0 to 100 ppm and H2S 0 to 50 ppm
+Optional
+Smart padlock
+Locked, unlocked and cut states; remote lock and unlock; one-time codes
+Optional
+Approvals
+CST radio type approval; SASO conformity for the device and battery
+Required
+ID
+Requirement
+Priority
+FR-62
+The platform accepts data from customer-sourced devices that meet the published specification, through a documented interface (payload format and protocol set out in an integration guide)
+M
+FR-63
+Device onboarding records the supply route (supplier-provided or customer-owned), serial number and, for supplied units, the warranty start and end dates
+S
+7. Platform feature requirements
+Cargo monitoring
+ID
+Requirement
+Priority
+FR-25
+Trip-level cargo view: cargo type, customer, origin, destination, ETA, current temperature, humidity, door state and health score on one card
+M
+FR-26
+Fleet dashboard counting containers by status, with open alerts and worst offenders at the top
+M
+FR-27
+Time-series charts for temperature, humidity (and gas, if fitted) with threshold bands and door events overlaid
+M
+FR-28
+Time spent in and out of the allowed range, calculated per trip
+M
+FR-29
+Cargo manifest attached to the trip: SKUs, quantity, batch, pack type
+S
+FR-30
+Cargo profile library: allowed temperature, humidity and gas limits and maximum excursion time for each cargo class (chilled meat, dairy, fresh produce, pharma, frozen, dry food, electronics)
+M
+FR-31
+Assigning a profile to a trip sets all thresholds automatically
+M
+FR-32
+Pre-trip check: device online, battery above 80%, sensors reading, door closed and locked
+S
+FR-33
+Delivery acceptance: consignee records accept, partial or reject against the condition record
+S
+FR-34
+Excursion log with start, end, duration, peak value and cause (if known)
+M
+Route monitoring: scheduled and unscheduled stops
+ID
+Requirement
+Priority
+FR-35
+Planned route, waypoints and scheduled stops (fuel, driver rest, inspection, customer drop) defined per trip
+M
+FR-36
+Actual path compared with the planned corridor; deviation beyond a configurable distance (default 2 km) raises an alert
+M
+FR-37
+A stop is detected when speed is below 3 km/h for more than 5 minutes (configurable)
+M
+FR-38
+Each stop classified automatically: scheduled (matches a planned stop or approved geofence), or unscheduled
+M
+FR-39
+Unscheduled stop alert shows location, duration, door state and whether the stop is in a high-risk zone
+M
+FR-40
+Route report: distance, driving time, stop time, planned versus actual ETA, deviation count
+M
+Cargo health monitoring (ML logic on temperature and humidity)
+ID
+Requirement
+Priority
+FR-41
+Cargo health score from 0 to 100 per container, refreshed with every reading batch
+M
+FR-42
+Score based on cumulative exposure, not only the last value: time above or below limits, size of excursion, and rate of change, weighted by cargo class
+M
+FR-43
+Predicted remaining shelf-life in hours or days, with a confidence range
+M
+FR-44
+Early warning when the model predicts the cargo will leave its safe range within the next 2 to 6 hours, for example from a rising temperature trend
+M
+FR-45
+Anomaly detection for sensor faults, reefer failure signatures (slow drift, sawtooth) and door-open effects, so that they are not mistaken for one another
+S
+FR-46
+Each score shows the top factors behind it in plain language (explainability), and the model version used
+M
+Alerts, reporting, integration and resilience
+ID
+Requirement
+Priority
+FR-47
+Alert rules per trip or cargo profile, with severity (info, warning, critical)
+M
+FR-48
+Delivery by dashboard, e-mail, SMS and push; escalation if unacknowledged after a set time
+M
+FR-49
+Suppression and grouping so one reefer failure does not create dozens of alerts
+S
+FR-50
+Alert lifecycle: new, acknowledged, in progress, closed, with comments and an audit trail
+M
+FR-51
+Delivery condition report (PDF) with trip summary, charts, excursions, door events and stops
+S
+FR-52
+Scheduled reports by customer, route or period
+S
+FR-53
+Tamper-evident record: readings are hashed and stored so the report can be defended in a dispute
+S
+FR-54
+REST API and webhooks for positions, readings, alerts and trips
+S
+FR-55
+Connectors for TMS, ERP and customer portals, plus SSO with the customer's identity provider
+S
+FR-56
+Store-and-forward: device buffers at least 7 days of readings when out of coverage and back-fills in order on reconnect
+M
+Reefer container support
+Reefer containers are in scope alongside dry boxes. The device measures the cargo space on its own, so it does not depend on the reefer's controller.
+ID
+Requirement
+Priority
+FR-57
+Each container is registered as dry or reefer; reefer trips carry the reefer unit's set point
+M
+FR-58
+The device's own temperature and humidity sensing works whether or not the reefer controller can be read, so a reefer fault is seen from the cargo side
+M
+FR-59
+Measured air temperature is compared with the set point; a deviation beyond a configurable tolerance for a configurable time raises a "reefer not holding set point" alert
+M
+FR-60
+Where the reefer exposes a data interface, the platform reads set point, supply and return air temperature, alarm codes and power state and shows them beside the sensor readings; the interface is confirmed with the reefer manufacturer
+S
+FR-61
+Reefer power loss or genset-off is flagged, from the reefer's own report where available and from the temperature trend otherwise
+S
+8. Solution architecture
+The solution has four layers: an in-container device, the mobile network, a cloud platform hosted in the Kingdom, and the apps and systems that use the data.
+Readings and door events travel left to right; lock and unlock commands for the optional padlock travel back the other way through the same channel. The cargo health model is highlighted because it is the layer that turns raw readings into a decision.
+Layer
+Design choices to confirm in the technical proposal
+Device
+One sealed unit mounted inside the container with an external antenna path; temperature, humidity and door sensing as standard, gas and padlock as add-on modules
+Network
+Cellular with a multi-network SIM for coverage along desert corridors; device buffers up to 7 days of readings when out of coverage
+Cloud
+Hosted in a Saudi data centre region; services split into ingestion, storage, rules, route engine, ML and API so each can scale separately
+Applications
+Responsive web app in Arabic and English; alerts by SMS, e-mail and push; PDF delivery reports
+Integration
+REST API and webhooks; connectors and single sign-on for the customer's TMS, ERP and portals
+9. Non-functional requirements and KSA compliance
+Regulatory items below are the ones a Saudi bid normally has to answer. Their exact applicability should be confirmed with the customer and legal counsel before submission.
+ID
+Requirement
+Target
+Priority
+NFR-01
+Data latency, device to dashboard, while in coverage
+60 seconds or less (critical events within 20 seconds)
+M
+NFR-02
+Platform availability
+99.5% monthly, excluding planned maintenance
+M
+NFR-03
+Device battery life
+30 days at 15-minute reporting, 10 days at 30-second reporting; rechargeable or replaceable; low-battery alert at 20%
+M
+NFR-04
+Device environment
+Sealed to IP67, operating −30 to +70 °C, survives shock and vibration of road transport
+M
+NFR-05
+Data residency
+Customer and operational data stored and processed in the Kingdom
+M
+NFR-06
+Cybersecurity
+Aligned to NCA Essential Cybersecurity Controls (ECC) and Cloud Cybersecurity Controls; TLS 1.2 or higher in transit, AES-256 at rest
+M
+NFR-07
+Personal data
+Driver and truck-plate data handled under the Personal Data Protection Law (PDPL); retention and access rules documented
+M
+NFR-08
+Device approvals
+Hardware import, CST radio type approval and SASO conformity (SABER) for the device and battery are managed and handled by the customer
+M
+NFR-09
+Transport and food rules
+Tracking supports TGA freight requirements; temperature records usable for SFDA cold-chain inspection
+S
+NFR-10
+Scalability
+5,000 containers at launch design; architecture proven to 50,000
+S
+NFR-11
+Usability
+Arabic and English interfaces with right-to-left layout; works on desktop, tablet and phone browsers
+M
+NFR-12
+Security of access
+Role-based access, MFA for administrators, full audit log
+M
+NFR-13
+Over-the-air updates
+Firmware and configuration updated remotely with rollback
+S
+NFR-14
+Data retention
+Raw readings kept 13 months online, then archived for 5 years; configurable
+S
+NFR-15
+Support
+Arabic and English support, 24/7 for critical incidents, with defined response times
+S
+10. Demo web app specification
+The demo is a browser app that replays a simulated fleet so a customer can see every feature without hardware. It runs on synthetic data only and must say so on screen ("Demo data" badge). A built-in clock runs at 1x, 10x or 60x speed so a 10-hour trip can be shown in a minute.
+Screens
+ID
+Screen
+What it shows
+Features covered
+DM-01
+Live fleet map
+Map of KSA with a synthetic fleet of 1,000 containers, colour-coded by status, clustering, filter bar, side list of alerts
+FR-03, FR-05, FR-26
+DM-02
+Container detail
+Cargo card, live temperature, humidity, door and lock state, gas readings (if fitted), health score gauge, last 24 h charts
+FR-25 to FR-28, FR-41
+DM-03
+Route monitor
+Planned corridor versus actual path, scheduled stops (green), unscheduled stops (red), deviation distance, ETA
+FR-35 to FR-40
+DM-04
+Cargo health
+Score trend, remaining shelf-life, early-warning banner, top contributing factors, model version
+FR-41 to FR-46
+DM-05
+Alerts centre
+Alert list by severity, acknowledge and close, escalation timer, filters
+FR-47 to FR-50
+DM-06
+Trip replay
+Timeline scrubber that moves the truck on the map while charts and door events follow
+FR-04
+DM-07
+Optional modules
+Gas sensing panel (NH3, H2S) and smart padlock with a simulated remote lock and unlock
+FR-17 to FR-24
+DM-08
+Delivery report
+One-page condition report preview with charts, excursions and door log, print to PDF
+FR-51
+DM-09
+Admin and settings
+Cargo profile library, threshold editor, device list with battery and signal
+FR-30, FR-31
+DM-10
+Persona and language switch
+Toggle between operator, quality manager, security officer and customer view; English and Arabic
+NFR-11
+Synthetic fleet and scenarios
+Twelve containers on realistic KSA road corridors. Each scenario is scripted so the same story plays every time, and a "randomise" button produces variations.
+Scenario
+Corridor (approx.)
+Cargo
+What happens
+A. Clean run
+Jeddah to Riyadh, about 950 km
+Frozen meat, −18 °C
+Stays in range; health score holds above 95
+B. Reefer drift
+Dammam to Riyadh, about 400 km
+Dairy, 2 to 8 °C
+Temperature creeps up after 3 h; early warning at 80 minutes before breach, then critical alert
+C. Door opened en route
+Riyadh to Qassim, about 350 km
+Electronics
+Door opens at a roadside stop in a non-approved zone; critical alert, padlock shows unlocked
+D. Unscheduled stop
+Jeddah to Madinah, about 420 km
+Pharma, 15 to 25 °C
+38-minute unplanned stop; classified as unscheduled; later back on route
+E. Route deviation
+Riyadh to Dammam
+FMCG
+Truck leaves the corridor by 14 km for 25 minutes
+F. Humidity and condensation
+Jeddah port to Makkah
+Dry food, below 60% RH
+Humidity climbs after a wet-weather door open; condensation risk flagged
+G. Spoilage gases
+Jizan to Jeddah, about 700 km
+Fresh fish with gas module
+NH3 and H2S rise while temperature is only slightly high; health score drops faster than temperature alone would suggest
+H. Coverage gap
+Tabuk to Riyadh
+Fresh produce
+Device goes offline for 40 minutes, then back-fills the buffered readings
+I to L. Normal traffic
+Mixed
+Mixed
+Fill the map with ordinary trips so exceptions stand out
+Synthetic data rules
+• Positions follow actual highway geometry; speeds vary between 70 and 110 km/h with slower urban and fuel-stop segments.
+• Temperature is generated from a simple thermal model: set point, ambient swing across the day (up to 45 °C in summer), door-open heat gain, and optional reefer fault injection, plus sensor noise of about ±0.2 °C.
+• All company names, truck plates and driver names are invented. No real customer data is used.
+• Seed values are stored in JSON so the data can be regenerated and changed without touching code.
+Technical notes for the demo build
+• Single-page web app, client-side simulation engine, no backend needed, so it can be hosted anywhere and works offline at a customer meeting.
+• Map via an open-source library (Leaflet or MapLibre); charts via Chart.js or similar; Arabic right-to-left layout from day one.
+• The ML health score in the demo uses the same formula as Appendix C (cumulative exposure model) so the numbers shown are explainable, not scripted.
+11. Proposal deck blueprint
+The PowerPoint proposal runs to 10 slides at most, technical first and commercial last, and end on a clear next step. Slide titles state the point, not the topic.
+#
+Slide title
+Content
+Source
+1
+Title
+Solution name and date; no submitter or customer name
+n/a
+2
+One platform for all 1,000 containers
+Four layers (container, network, cloud, people) and a fleet dashboard showing 1,000 containers
+Sec. 2, 8
+3
+What the device and platform sense
+Cutaway of the container with numbered sensors, cellular router tracking with configurable interval (30 s default, 5 min recommended), accuracy tiles
+FR-01 to FR-24
+4
+Route monitoring and cargo health
+KSA map with planned and actual route and unscheduled stop, health chart and early warning
+FR-35 to FR-46
+5
+Application flow: from sensor to action
+Six steps: sense, send, store, analyse, notify, act
+Sec. 8
+6
+User flow
+Four swim lanes: operator, quality manager, security officer, customer
+Sec. 4
+7
+Hardware: full specification, two supply routes
+Specification table, customer-sourced or supplied, 1-year warranty on supplied hardware, customer responsibility for import and KSA compliance
+NFR-03, NFR-04
+8
+Handling 1,000 containers: who provides what
+Scale flow, what we provide, what the customer arranges (compliance, installation, SIM and data, ERP or TMS data, field support), two hosting options
+Sec. 8, 13
+9
+Pilot plan and next steps
+Four phases with two gates, then next steps
+Sec. 12
+10
+Commercial offer: POC and 1,000-container scale-up
+Price table in USD: one-time hardware if supplied, platform price, monthly licence, remote monthly support on an annual commitment
+Sec. 13
+All customer statistics, reference projects and device certificates used in the deck must be sourced and verified by the bid team; none are asserted in this BRD.
+12. Implementation approach
+The recommended route is a pilot of 10 containers for 60 days, mixing dry and reefer boxes, before any fleet-wide commitment. The pilot KPIs in section 15 decide whether Gate 2 is passed.
+Gate 1 confirms that devices fit, read and report on the actual container types, including reefers. Gate 2 confirms that the pilot KPIs are met, and it is the point at which the customer issues a rollout order.
+Pilot deliverables
+• Platform configured with the customer's cargo profiles, thresholds, users and alert rules, in Arabic and English.
+• Devices fitted to the pilot containers, either supplied by the supplier (with a 1-year warranty) or sourced by the customer to the published specification.
+• User training for operators, quality and security staff.
+• Weekly review of alerts, route stops and cargo health scores with the customer.
+• A pilot report with KPI results, excursion analysis and a rollout recommendation.
+13. Commercial structure
+No prices are stated in this BRD; Imran will add them, all in US dollars (USD). Hardware prices in the proof of concept (POC) are listed as indicative unit prices and will differ from the prices quoted for large order quantities, and the deck should say so beside the table. The structure below is what the commercial slide and annex should contain, with prices to be added by Imran. A subscription-plus-device model is assumed because it matches how fleet telematics is normally bought; a one-time purchase option should be offered alongside it.
+Group
+Item
+Basis
+POC price (USD), 10 containers
+Scale-up price (USD), 1,000 containers
+Hardware, one-time, if we supply
+Tracking device with temperature, humidity and door sensing
+Per unit
+To be added
+To be added
+Hardware, one-time, if we supply
+Gas sensing module (NH3 and H2S), optional
+Per unit
+To be added
+To be added
+Hardware, one-time, if we supply
+Smart padlock, optional
+Per unit
+To be added
+To be added
+Hardware, one-time, if we supply
+Additional temperature probes, optional
+Per probe
+To be added
+To be added
+Platform price, one-time
+Set-up, activation and training
+One-time
+To be added
+To be added
+Platform price, one-time
+API and TMS or ERP integration, optional
+One-time
+To be added
+To be added
+Monthly licence to use
+Platform: live map, alerts, reports, ML cargo health
+Per container per month
+To be added
+To be added
+Monthly licence to use
+Hosting in our KSA cloud region (option A)
+Per month
+To be added
+To be added
+Remote support, monthly
+Remote monitoring, helpdesk and platform support
+Per month, annual commitment
+To be added
+To be added
+Hardware supply options. The sensor and device details are published in full (section 6), so the customer can either source compliant hardware itself or buy it from the supplier. If the supplier supplies the hardware, it carries a 1-year warranty from the supply date; the warranty covers only hardware supplied by the supplier. Customer-sourced hardware must meet the published specification to be accepted by the platform. When the customer sources its own hardware, the device lines above drop out and the platform, integration and support lines remain; SIM cards and data plans are arranged by the customer.
+Commercial terms to settle before issue: validity of the offer, payment schedule (for example advance, delivery, go-live), who owns lost or damaged devices, minimum contract term, and price protection for volume additions.
+14. Risks, assumptions and open questions
+Risks
+Risk
+Likelihood
+Impact
+Mitigation
+Cellular coverage gaps on desert corridors cause data holes
+High
+Medium
+Store-and-forward for 7 days; dual-SIM or multi-network SIM; show data gaps explicitly rather than hiding them
+Steel container blocks cellular signal from inside
+High
+High
+External antenna through a roof or door mount, or a door-mounted unit; field-test on the actual container type before rollout
+Device battery too short for long trips and port dwell
+Medium
+High
+Adaptive reporting rate, motion-triggered wake-up, rechargeable pack with swap procedure
+Gas sensors drift or give false alarms in heat
+Medium
+Medium
+Calibration schedule, temperature compensation, two-stage alert (warning before critical)
+ML score not trusted by quality teams
+Medium
+High
+Explainable factors, start in advisory mode, tune thresholds with customer's own cargo data
+Alert fatigue from frequent minor excursions
+Medium
+Medium
+Severity levels, grouping, escalation timers
+Device certification (CST, SASO) delays the pilot
+Medium
+High
+Choose a device with existing approvals; confirm certificates before quoting
+Device theft or removal
+Medium
+Medium
+Tamper alerts, concealed mounting, recovery process in contract
+Assumptions
+• Sensors and devices are either supplied by the supplier from certified partners, or sourced by the customer to the published specification; the supplier does not manufacture them.
+• Containers are standard 20 ft or 40 ft dry or reefer boxes; non-standard cargo bodies need a separate fit check.
+• The customer provides route and stop data per trip, or the platform learns approved stops from the first trips.
+• The demo uses synthetic data and is not evidence of live performance. All regulatory compliance for hardware import, and the legality of the hardware in KSA, is managed and handled by the customer, whichever party supplies the hardware.
+Open questions for the customer or the bid team
+[ ] Target customer and segment, to set cargo profiles and the deck's language.
+[ ] Fleet size and trips per month, for volume tiers and sizing.
+[ ] Share of reefer and dry boxes in the fleet, and whether the reefer unit's own controller data can be read.
+[ ] Hardware route (supplier-provided or customer-sourced), the preferred device partner and its certification status.
+[ ] Required cloud hosting provider in the Kingdom and any customer cybersecurity review.
+[ ] Brand pack, logo and references to use in the deck.
+[ ] Arabic deck needed alongside English.
+15. Acceptance criteria and KPIs
+Targets are proposals for the pilot and should be agreed with the customer.
+KPI
+Target
+How measured
+Linked to
+Position data availability while moving
+98% of expected reports received (with back-fill, 99.5%)
+Platform report, pilot trips
+BR-01
+Dashboard latency
+60 seconds or less at the 95th percentile
+Timestamp comparison, device to screen
+NFR-01
+Temperature accuracy
+±0.5 °C against a calibrated reference
+Bench and in-truck test
+FR-06
+Door event detection
+100% of door openings in test runs detected and alerted in 20 seconds
+Scripted door tests
+FR-13 to FR-15
+Unscheduled stop classification
+95% agreement with manual review of the trips
+Sample audit
+FR-37, FR-38
+Early-warning lead time
+At least 60 minutes before breach in 80% of reefer-drift cases
+Replay of pilot excursions
+FR-44
+Health score usefulness
+Quality team agrees with score direction in 90% of reviewed trips
+Review workshop
+FR-41 to FR-43
+False alert rate
+Below 10% of alerts closed as "no action"
+Alert lifecycle report
+FR-47 to FR-49
+Device battery
+Meets NFR-03 on a full pilot trip
+Field logs
+NFR-03
+Demo acceptance (for the web app)
+• All ten screens DM-01 to DM-10 work in current Chrome, Edge and Safari, in English and Arabic.
+• Scenarios A to H play from start to finish without manual fixes, and can be restarted.
+• Every feature in sections 6 and 7 can be shown within a 20-minute walk-through.
+• Synthetic data is labelled as such on every screen.
+16. Appendices
+Appendix A. Alert catalogue
+Alert
+Default trigger
+Severity
+Notify
+Temperature warning
+Reading outside band for 5 minutes
+Warning
+Operator
+Temperature critical
+Outside band by more than 3 °C, or outside for 20 minutes
+Critical
+Operator, quality manager
+Humidity high
+Above profile limit for 15 minutes
+Warning
+Operator
+Door open in motion
+Door opens when speed is above 5 km/h
+Critical
+Operator, security
+Door open outside geofence
+Door opens away from an approved loading or delivery point
+Critical
+Operator, security
+Unscheduled stop
+Stop longer than 5 minutes outside approved stops
+Warning (critical in a high-risk zone)
+Operator, fleet manager
+Route deviation
+More than 2 km from the planned corridor
+Warning
+Operator
+Gas warning and critical
+NH3 or H2S above profile limits
+Warning, Critical
+Operator, quality manager
+Padlock cut or tamper
+Padlock cut state or device enclosure opened
+Critical
+Operator, security
+Cargo health early warning
+Model predicts breach within 2 to 6 hours
+Warning
+Operator, quality manager
+Device offline
+No report for 30 minutes while last state was moving
+Warning
+Operator
+Low battery
+Below 20%
+Info
+Administrator
+Appendix B. Data dictionary (core fields)
+Entity
+Key fields
+Device
+device ID, container ID, firmware, battery %, signal strength, last seen, sensor options fitted
+Reading
+device ID, timestamp, latitude, longitude, speed, heading, temperature °C, humidity % RH, NH3 ppm, H2S ppm, door state, lock state
+Trip
+trip ID, container ID, truck plate, driver, customer, origin, destination, planned route, scheduled stops, cargo profile, start and end time
+Stop
+stop ID, trip ID, start, end, location, class (scheduled or unscheduled), door events during stop
+Alert
+alert ID, trip ID, type, severity, raised at, acknowledged by, closed at, comments
+Cargo profile
+profile name, temperature limits, humidity limits, gas limits, maximum excursion time, model parameters
+Health record
+trip ID, timestamp, score, remaining shelf-life, top factors, model version
+Appendix C. Cargo health model (baseline for demo and pilot)
+The first release uses an explainable exposure model that can be reproduced in the demo, with a trained model added as data from live trips builds up. Excursion exposure is accumulated as degree-hours outside the band, and spoilage rate rises with temperature in a Q10-style curve (Q10 assumed between 2 and 3, to be tuned per cargo class).
+D_T = \sum_i \max(0,\; T_i - T_{max},\; T_{min} - T_i)\,\Delta t_i
+H = 100\,\exp\!\big(-(a_c D_T + b_c D_H + g_c D_G)\big), \qquad r(T) = Q_{10}^{(T - T_{ref})/10}
+Here D_H and D_G are the same sum for humidity and gas, a, b and g are weights per cargo class, and r(T) is the relative spoilage rate used to reduce the remaining shelf-life estimate. The early-warning rule projects the next 2 to 6 hours from the recent slope (a rolling linear or exponential-smoothing forecast) and fires when the projected value crosses the band. A gradient-boosted model or LSTM trained on labelled trip outcomes (accepted, partially rejected, rejected) can replace the weights once the pilot provides enough data; the explainable factors stay in place.
+Appendix D. Glossary
+Term
+Meaning
+Cellular router tracking
+Container position reported through the cellular router
+Reefer
+Refrigerated container
+Excursion
+A period when a reading is outside its allowed band
+Geofence
+A virtual boundary around a place such as a depot or customer site
+Store-and-forward
+Device keeps readings during an outage and uploads them later
+NH3, H2S
+Ammonia and hydrogen sulphide, gases released as protein cargo spoils
+CST, TGA, SASO, SFDA, NCA, PDPL
+Saudi communications regulator, transport regulator, standards body, food and drug authority, cybersecurity authority, and personal data protection law
+SLA
+Service level agreement
