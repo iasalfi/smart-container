@@ -11,7 +11,7 @@ Every automated test carries one ID from this bank in its title. `npm run test:b
 
 Pipeline order: lint and type check, test-bank check, unit and API tests, build of both services, end-to-end tests (feature, UI, UX, accessibility, service boundary), then production deploy of the API and the web UI only when every stage is green, then a smoke test on both live URLs with automatic rollback.
 
-Totals: 207 cases. Unit 66, API 35, end-to-end 106. Regression 126, progression 34, negative 47.
+Totals: 273 cases. Unit 93, API 35, end-to-end 145. Regression 165, progression 48, negative 60.
 
 ## Unit tests: data, health model, alerts, route, filters, language
 
@@ -168,7 +168,7 @@ Totals: 207 cases. Unit 66, API 35, end-to-end 106. Regression 126, progression 
 
 | ID | Area | Suite | Ref | Case | Steps | Expected result |
 |---|---|---|---|---|---|---|
-| TC-E-030 | Alerts | progression | FR-48 | Acknowledge then close moves an alert through its lifecycle | Ack, then close | State Open, Acknowledged, Closed |
+| TC-E-030 | Alerts | progression | FR-48 | An alert moves through acknowledge, in progress, resolved and closed | Open Alerts, acknowledge the first alert, start work, resolve it, then close it | The state reads Open, Acknowledged, In progress, Resolved and finally Closed |
 | TC-E-031 | Alerts | progression | FR-49 | Escalation timer shows for critical open alerts | Open Alerts | Escalated or Escalates in N min on critical rows |
 | TC-E-032 | Alerts | progression | NFR-13 | Alert state survives a reload | Ack, reload | Still Acknowledged |
 | TC-E-033 | Replay | progression | DM-06 | Play advances the replay | Click Play | Time label changes without touching the slider |
@@ -196,7 +196,7 @@ Totals: 207 cases. Unit 66, API 35, end-to-end 106. Regression 126, progression 
 | TC-E-056 | Modules | negative | DM-07 | Containers without modules show not fitted | Open SC-1001 modules | Both not-fitted messages |
 | TC-E-057 | Admin | negative | FR-31 | Invalid thresholds are rejected | Enter 0, -5, abc, empty | Error shown, alert total unchanged |
 | TC-E-058 | Persona | negative | DM-10 | Customer cannot open another customer's container or Admin | Customer view, open SC-1043 and /admin | Not found and not available states |
-| TC-E-059 | Alerts | negative | FR-48 | Close is disabled before acknowledge, Acknowledge disabled after | Inspect buttons | Correct enabled states |
+| TC-E-059 | Alerts | negative | FR-48 | Close is disabled until the alert is resolved, Acknowledge disabled after it is done | Open Alerts and look at the first alert, then acknowledge it | Close is disabled before and after acknowledging, and Acknowledge is disabled after |
 | TC-E-060 | Platform | negative | NFR-13 | Corrupted saved state does not break the app | Write invalid JSON to storage, load | Fleet renders normally |
 | TC-E-061 | Platform | negative | NFR-13 | Unknown URL shows the 404 page | Open /does-not-exist/ | Not found state, no crash |
 | TC-E-062 | Alerts | negative | DM-05 | Alert search with no match shows an empty state | Type SC-0000 | Empty message |
@@ -274,3 +274,86 @@ Totals: 207 cases. Unit 66, API 35, end-to-end 106. Regression 126, progression 
 | TC-E-126 | Fleet | progression | DM-03 | Alert types appear as icon tiles whose counts add up to the open alerts | Open the fleet page | Seven icon tiles whose counts total 102, matching the open alerts figure |
 | TC-E-127 | UI | progression | DM-01 | Each table row shows a container icon and the map labels the seven cities | Open the fleet page | Container icon on each row; seven city labels on the map |
 | TC-E-128 | Fleet | regression | NFR-10 | The landing page states each fact once, with no repeated status chart or event list | Open the fleet page | No status donut, no latest events list, no intro paragraph repeating the fleet size |
+
+## Unit tests: alert and alarm management (ITSM), journey planning and on-boarding
+
+Priority matrix, SLA clocks, support tiers, problem candidates, the route and pitstop planner, milestone tracking and on-boarding checks.
+
+| ID | Area | Suite | Ref | Case | Steps | Expected result |
+|---|---|---|---|---|---|---|
+| TC-U-090 | ITSM | regression | FR-59 | the priority matrix gives P1 for high impact and urgency and P4 for the lowest | Read the priority matrix | P1 for high impact and urgency, P4 for the lowest |
+| TC-U-091 | ITSM | regression | FR-59 | impact and urgency follow the alert type, cargo and age | Classify alerts by type, cargo and age | Impact, urgency and priority follow the rules |
+| TC-U-092 | ITSM | regression | FR-59 | response and resolution targets get longer as priority drops | Compare targets from P1 to P4 | Response and resolution targets grow as priority drops |
+| TC-U-093 | ITSM | regression | FR-59 | an open alert breaches its response clock once its age reaches the target | Run the response clock on an open P1 alert at 5, 8 and 10 minutes | Running, at risk, then breached |
+| TC-U-094 | ITSM | regression | FR-59 | acknowledging stops the response clock and resolving stops the resolution clock | Stop the clocks by acknowledging and resolving | Response and resolution stop at the action, and late actions read met late |
+| TC-U-095 | ITSM | regression | FR-59 | breaches and major incidents lift the support tier | Work out the tier for fresh, breached and major tickets | L1 by default, L2 for P1 or response breach, L3 for resolution breach or major incident |
+| TC-U-096 | ITSM | regression | FR-59 | the lifecycle only allows the next step and closure needs a resolution | Check every allowed and refused state change | Only the next step is allowed and closure needs a resolution |
+| TC-U-097 | ITSM | regression | FR-59 | statistics count active tickets, SLA risk, owners and mean times | Compute statistics for the 102 alerts and for a closed ticket | Totals, owners, matrix cells and mean times are right |
+| TC-U-098 | ITSM | regression | FR-59 | recurring alerts on one corridor become problem candidates | Group the alerts by type and corridor | Patterns of four or more alerts become problem candidates, largest first |
+| TC-U-099 | ITSM | regression | FR-59 | queues order by priority, then by the oldest alert | Sort two tickets and format minutes | Priority first, then oldest, and durations read 45 min, 2 h 5 min, 2 h |
+| TC-U-100 | Journeys | regression | FR-60 | times are read and written as plain local time | Parse and print local times | Round trip works and invalid dates are rejected |
+| TC-U-101 | Journeys | negative | FR-60 | a plan is rejected for the same city, repeated stops, a bad time or a bad speed | Validate plans with bad cities, times and speeds | Each problem is named and planning throws |
+| TC-U-102 | Journeys | regression | FR-60 | a short trip has loading, departure, arrival and delivery and no pitstop | Plan a short trip | Loading, departure, arrival and delivery with no pitstop |
+| TC-U-103 | Journeys | regression | FR-60 | long trips get rest stops after 4.5 hours of driving and fuel stops by range | Plan Jeddah to Riyadh | Rest stops within 4.5 hours of driving and fuel stops within range |
+| TC-U-104 | Journeys | regression | FR-60 | milestones stay in time order with growing distance and a daily driving limit adds an overnight stop | Plan Dammam to Jeddah | Milestones in time and distance order, with an overnight stop and a multi-day warning |
+| TC-U-105 | Journeys | regression | FR-60 | via cities become waypoints and the road is the sum of the legs | Plan with a via city | Waypoint milestone and legs that add up to the total |
+| TC-U-106 | Journeys | regression | FR-60 | reefer cargo adds a pre-trip temperature check and port cities add gate and customs steps | Plan reefer cargo from a port with customs | Pre-trip check, port gate, customs and a long haul warning |
+| TC-U-107 | Journeys | regression | FR-60 | a deadline that the plan cannot meet raises a warning | Plan with a tight deadline and a late night start | Deadline and night departure warnings |
+| TC-U-108 | Journeys | progression | FR-60 | a new journey is planned and completing milestones moves it to dispatched, in transit and completed | Complete every milestone of a new journey | Status goes planned, dispatched, in transit, completed |
+| TC-U-109 | Journeys | progression | FR-60 | delays are measured against the plan and move the estimated arrival | Log milestones with delays | Delay, estimated arrival, late flag and the delayed status follow |
+| TC-U-110 | Journeys | negative | FR-60 | only rest and fuel stops can be skipped and a completed journey cannot be cancelled | Skip and cancel at the wrong time | Only rest and fuel stops can be skipped and a completed journey cannot be cancelled |
+| TC-U-111 | Journeys | regression | FR-60 | a fleet trip can be replayed up to its progress and the position follows the road | Replay a fleet trip at half way | In transit, with progress and position along the road |
+| TC-U-112 | On-boarding | regression | FR-61 | a complete form passes | Validate a complete form | No errors |
+| TC-U-113 | On-boarding | negative | FR-61 | bad container IDs, plates, seals and phone numbers are named | Validate bad IDs, plates, seals, phones and duplicates | Each problem is named |
+| TC-U-114 | On-boarding | negative | FR-61 | reefer cargo needs a set point inside its band and dry cargo does not | Validate reefer set points and dry cargo | Missing and out of band set points are refused, dry cargo needs none |
+| TC-U-115 | On-boarding | regression | FR-61 | journey IDs continue from the highest one in use | Create journey IDs and build a journey from a form | IDs continue from the highest and values are normalised |
+| TC-U-116 | Journeys | regression | FR-60 | live fleet trips become journeys with a matching status and progress | Seed journeys from the live fleet | At least ten journeys, eight on the road, two planned and one completed |
+
+## End-to-end: alert and alarm management (ITSM)
+
+| ID | Area | Suite | Ref | Case | Steps | Expected result |
+|---|---|---|---|---|---|---|
+| TC-E-129 | Alerts | regression | FR-59 | The service level strip shows breaches, risk, unassigned, major incidents and mean times | Open Alerts | Six service level figures show, 102 unassigned and at least one breached |
+| TC-E-130 | Alerts | regression | FR-59 | The priority matrix counts every open alert once and a cell filters the queue | Add the nine matrix cells, select the first | Cells total 102 and the list shows only P1 alerts |
+| TC-E-131 | Alerts | regression | FR-59 | Every alert shows a priority badge, response and resolution clocks, a tier and an owner | Read the first alert row | Priority, response and resolution clocks, tier, owner and kind are shown on all 102 |
+| TC-E-132 | Alerts | progression | FR-59 | Acknowledging stops the response clock and keeps the resolution clock running | Acknowledge the first alert | The response clock stops as met late and resolution keeps running |
+| TC-E-133 | Alerts | progression | FR-59 | A ticket goes through acknowledge, start, resolve with a code and close, and the timeline records each step | Acknowledge, start, resolve with a code and close | Each state shows and the timeline has four entries |
+| TC-E-134 | Alerts | progression | FR-59 | Assigning an owner moves the ticket from Unassigned into My queue | Assign the first alert to yourself | My queue becomes 1 and Unassigned drops to 101 |
+| TC-E-135 | Alerts | progression | FR-59 | Escalating lifts the tier and declaring a major incident moves the ticket to the duty manager | Escalate a P4 alert and declare a major incident | Tier goes L1, L2, L3 and the major incident count is 1 |
+| TC-E-136 | Alerts | progression | FR-59 | A note added to a ticket appears in its timeline | Add a note to a ticket | The note appears in the timeline and the field clears |
+| TC-E-137 | Alerts | progression | FR-59 | Recurring alerts become problem candidates and raising one links the alerts to a problem record | Raise a problem from a candidate with a root cause | PRB-001 appears, linked alerts show it and it survives a reload |
+| TC-E-138 | Alerts | negative | FR-59 | Resolve and Close stay disabled until the earlier steps are done | Check the buttons before and after acknowledging | Start, Resolve and Close are disabled until their earlier step is done |
+| TC-E-139 | Alerts | negative | FR-59 | A blank note cannot be added | Add an empty or blank note | The Add button stays disabled |
+| TC-E-140 | Alerts | negative | FR-59 | The customer view has no service desk panels and no action buttons | Switch to the customer view on Alerts | No service level strip, matrix, problems or action buttons |
+| TC-E-141 | Alerts | regression | FR-59 | The lifecycle and tier tiles count the tickets and filter the list | Use the lifecycle and tier tiles | Counts match and selecting a tile filters the list |
+| TC-E-142 | Alerts | progression | FR-59 | Owner, notes and state survive a reload | Assign, acknowledge and reload | Owner, state and timeline are kept |
+| TC-E-143 | A11y Alerts | regression | NFR-12 | The alert and alarm page with an open ticket has no serious accessibility violations @regression @a11y | Open a ticket and run the accessibility scan | No serious or critical violations |
+| TC-E-144 | Alerts | regression | NFR-13 | The alert and alarm page works in Arabic with the service level strip and queues | Switch the Alerts page to Arabic | Arabic headings, queues and clocks with no serious violations |
+| TC-E-145 | Alerts | regression | NFR-11 | The alert and alarm page fits a phone without sideways scrolling | Open Alerts and a ticket at 390 px | No sideways scrolling |
+
+## End-to-end: journey operations, on-boarding and theme
+
+| ID | Area | Suite | Ref | Case | Steps | Expected result |
+|---|---|---|---|---|---|---|
+| TC-E-146 | Operations | regression | FR-60 | The Operations page lists 11 journeys on a board with a count for each status | Open Operations from the menu | 11 journeys across Planned 2, In transit 6, Delayed 2, Completed 1 |
+| TC-E-147 | Operations | regression | FR-60 | Searching the board by container, journey or customer narrows the cards | Search the board | Cards narrow and an empty state shows for no match |
+| TC-E-148 | Operations | regression | FR-60 | A journey page shows the road, load details, key figures and the milestone list | Open a journey | Road, load details, key figures and milestones from loading to delivery |
+| TC-E-149 | Operations | progression | FR-60 | Logging the next milestone with a delay updates the delay, the estimated arrival and the row | Log milestones with a 20 minute delay and reload | Status, delay and estimated arrival update and persist |
+| TC-E-150 | Operations | progression | FR-60 | A delay of more than 30 minutes marks the journey Delayed and it moves to the Delayed column | Log a 45 minute delay | The journey is Delayed and sits in the Delayed column |
+| TC-E-151 | Operations | progression | FR-60 | A rest or fuel stop can be skipped and is shown as skipped | Skip the fuel stop | The stop is marked skipped and the next milestone moves on |
+| TC-E-152 | Operations | progression | FR-60 | Cancelling a journey asks first and then marks it cancelled | Cancel a journey, first keep it, then confirm | The journey is cancelled and logging is gone |
+| TC-E-153 | On-boarding | progression | FR-61 | A new load can be on-boarded, planned and dispatched in five steps, and it stays after a reload | Fill the five steps and dispatch | J-1012 is created, listed with its assets and kept after a reload |
+| TC-E-154 | On-boarding | negative | FR-61 | The first step names what is missing and does not move on | Press Next on the empty first step | The missing fields are named and the step stays |
+| TC-E-155 | On-boarding | negative | FR-61 | A container ID or plate that is already in use is refused | Use a container ID and a plate that exist | Both are refused as already in use |
+| TC-E-156 | On-boarding | negative | FR-61 | A set point outside the cargo's safe band is refused | Enter a set point of 14 for dairy | The set point is refused until it is back in band |
+| TC-E-157 | On-boarding | negative | FR-60 | A route with the same start and end, or a bad speed, is refused | Choose the same start and end, then a speed of 20 | Both are refused with a clear message |
+| TC-E-158 | Operations | negative | FR-60 | A delay that is not a number logs nothing and shows an error | Log an empty delay and a delay of 5000 | An error shows and nothing is logged |
+| TC-E-159 | Operations | negative | FR-60 | An unknown journey ID and the customer view both get a clear block | Open J-9999 and open Operations as a customer | Not found and not available messages, no menu entry for the customer |
+| TC-E-160 | Operations | regression | FR-60 | A long haul gets rest, fuel and overnight stops and a multi-day warning | Plan Dammam to Jeddah | Rest, fuel and overnight stops, pins on the map and a multi-day warning |
+| TC-E-161 | Operations | regression | FR-60 | Stops on the way become waypoints in order and can be removed | Add and remove stops on the way | Waypoints keep their order and the plan shows Madinah |
+| TC-E-162 | Operations | regression | FR-60 | A port destination offers customs clearance and adds that milestone | Plan Riyadh to Dammam with customs | Customs and the pre-trip check appear in the milestones |
+| TC-E-163 | Operations | regression | FR-60 | A delivery deadline that the plan misses raises a warning | Set a deadline the plan cannot meet | A deadline warning shows |
+| TC-E-164 | A11y Operations | regression | NFR-12 | Operations pages have no serious accessibility violations @regression @a11y | Scan the board, assets, a journey and the plan step | No serious or critical violations |
+| TC-E-165 | Operations | regression | NFR-13 | Operations work in Arabic with right to left layout | Switch Operations to Arabic | Arabic labels, right to left layout and Arabic error text |
+| TC-E-166 | Operations | regression | NFR-11 | Operations pages fit a phone without sideways scrolling | Open the three Operations pages at 390 px | No sideways scrolling |
+| TC-E-167 | UI | regression | NFR-10 | The theme is a dull pastel palette of sand, sage and dusty teal with a light top bar | Read the theme tokens and the top bar colour | Sand background, dusty teal, a light top bar and the hero gradient, with no old navy or blue |
