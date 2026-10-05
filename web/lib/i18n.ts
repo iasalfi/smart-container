@@ -3,13 +3,14 @@ import { arItsm, enItsm } from "./i18n-itsm";
 import { arOps, enOps } from "./i18n-ops";
 import { arAn, enAn } from "./i18n-analytics";
 import { arLive, enLive } from "./i18n-live";
+import { arPeople, enPeople } from "./i18n-people";
 
 export const en = {
   app_name: "Smart Container Monitoring",
   synthetic: "Demo with synthetic data",
-  nav_fleet: "Fleet",
-  nav_alerts: "Alerts",
-  nav_admin: "Admin",
+  nav_fleet: "Control tower",
+  nav_alerts: "Cases",
+  nav_admin: "Settings",
   persona: "View as",
   language: "Language",
   persona_operator: "Operator",
@@ -271,6 +272,7 @@ export const en = {
   ...enOps,
   ...enAn,
   ...enLive,
+  ...enPeople,
 } as const;
 
 export type Key = keyof typeof en;
@@ -278,9 +280,9 @@ export type Key = keyof typeof en;
 export const ar: Record<Key, string> = {
   app_name: "مراقبة الحاويات الذكية",
   synthetic: "عرض تجريبي ببيانات اصطناعية",
-  nav_fleet: "الأسطول",
-  nav_alerts: "التنبيهات",
-  nav_admin: "الإدارة",
+  nav_fleet: "برج المراقبة",
+  nav_alerts: "الحالات",
+  nav_admin: "الإعدادات",
   persona: "العرض كـ",
   language: "اللغة",
   persona_operator: "مشغّل",
@@ -542,6 +544,7 @@ export const ar: Record<Key, string> = {
   ...arOps,
   ...arAn,
   ...arLive,
+  ...arPeople,
 };
 
 export const dictionaries: Record<Lang, Record<Key, string>> = { en: en as unknown as Record<Key, string>, ar };
