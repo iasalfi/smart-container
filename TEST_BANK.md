@@ -11,7 +11,7 @@ Every automated test carries one ID from this bank in its title. `npm run test:b
 
 Pipeline order: lint and type check, test-bank check, unit and API tests, build of both services, end-to-end tests (feature, UI, UX, accessibility, service boundary), then production deploy of the API and the web UI only when every stage is green, then a smoke test on both live URLs with automatic rollback.
 
-Totals: 293 cases. Unit 100, API 35, end-to-end 158. Regression 183, progression 49, negative 61.
+Totals: 315 cases. Unit 104, API 35, end-to-end 176. Regression 196, progression 53, negative 66.
 
 ## Unit tests: data, health model, alerts, route, filters, language
 
@@ -382,3 +382,30 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 | TC-E-178 | Analytics | regression | FR-65 | Analytics and reports work in Arabic with right to left layout | Switch to Arabic on Analytics, Reports and Fleet | Arabic headings, columns and strip, right to left layout |
 | TC-E-179 | Analytics | regression | NFR-11 | Analytics, reports and every persona dashboard fit a phone without sideways scrolling | Open the three pages at 390 px for all personas | No sideways scrolling |
 | TC-E-180 | Analytics | negative | FR-67 | Switching persona on a page never leaves another persona's report or widgets behind | Pick an operator report, switch to customer, open Analytics | The customer lands on its own report and sees no service desk or corridor widgets |
+
+## Live map, road routing and route planner
+
+| ID | Area | Suite | Ref | Case | Steps | Expected result |
+|---|---|---|---|---|---|---|
+| TC-U-124 | Live map | regression | FR-68 | a road is measured, split by share and sliced without losing its end points | Measure a three-point road, read points at shares below 0, at 0, 0.5, 1 and above 1, and slice it | Length matches the sum of legs, shares are clamped, slices end exactly at the share |
+| TC-U-125 | Live map | regression | FR-68 | the heading follows the direction of the road and a truck advances with speed and time | Read bearings on an eastbound and a northbound leg, advance a truck by speed and simulated time | East is 90 degrees, north is 0, 80 km/h for an hour on 800 km adds 0.1, stopped trucks stay put, share never passes 1 |
+| TC-U-126 | Live map | regression | FR-68 | the routing service answer is read safely and a bad answer gives no route | Parse a good answer, one with unusable routes and eight kinds of bad input, and build the request URL | Only usable routes are returned with km and minutes, bad input gives an empty list, the URL carries the stops in order |
+| TC-U-127 | Live map | regression | FR-68 | every corridor has a local stand-in road, so tracking still works when routing is down | Build the stand-in road for all eight corridors and for a two-stop trip | Each has more than ten points and over 100 km, bounds are ordered, the estimate is flagged and over 900 km for Jeddah to Riyadh |
+| TC-E-181 | Live map | regression | FR-68 | The live map opens with the whole fleet on a MapLibre map for the operator | Open the live map as the operator | A MapLibre canvas, 1,000 container points, seven city labels, the Live badge, the plan tab and a map credit |
+| TC-E-182 | Live map | regression | FR-68 | Selecting a container draws its road, the truck and both ends, with speed and arrival | Open the live map with SC-1002 selected | Two road lines, one truck, two end pins, road source from the routing service, speed, distance left and arrival time |
+| TC-E-183 | Live map | progression | FR-69 | Moving trucks advance along the road on the live clock | Select a moving truck and wait | The truck position changes and the distance still to drive falls |
+| TC-E-184 | Live map | progression | FR-69 | Pausing the live clock stops the trucks and resuming moves them again | Pause, wait 4.5 s, resume | The truck stays put while paused, the badge says Paused, and it moves again after resuming |
+| TC-E-185 | Live map | regression | FR-68 | The status filter and the search narrow the points and the list | Filter to critical, then search by ID and by a missing word | 27 critical points, 8 list rows, one match for SC-1002, an empty state and zero points for no match |
+| TC-E-186 | Live map | regression | FR-70 | The live map follows the signed-in role: a customer sees only its own containers and no planner | Switch between operator, customer and quality | 1,000 containers for operator and quality, 127 for the customer, no planner tab for the customer |
+| TC-E-187 | Live map | regression | FR-68 | The container and journey pages link to the live map with the container already selected | Click Track on the live map from a container and from a journey | The live map opens with that container selected |
+| TC-E-188 | Live map | negative | FR-68 | When the routing service is down the map falls back to the planned corridor and says so | Block the routing service and open a container | Road source says estimate, the line, the truck and the arrival time still show |
+| TC-E-189 | Live map | negative | FR-71 | A routing answer with no road is treated like an outage and the page still works | Answer the routing service with no route, then open the planner | Tracking and planning use the estimate, the planner shows the estimate note and a distance |
+| TC-E-190 | Live map | negative | FR-68 | When the base map cannot load, routes and trucks are still drawn on a plain background | Block the base map style | Base map is offline, the notice shows, 1,000 points, two lines and the truck are drawn |
+| TC-E-191 | Live map | progression | FR-71 | The route planner shows the road, distance, driving time, arrival, options and stops | Open the planner with the default Jeddah to Riyadh trip | Distance between 900 and 1,500 km, driving time, arrival, two route options, at least three stops, pins equal to stops |
+| TC-E-192 | Live map | progression | FR-71 | Changing the speed, the option or the stops re-plans the route | Lower the speed, pick the second option, add Madinah as a stop | Driving time grows, the longer option adds distance, the summary lists the three cities |
+| TC-E-193 | Live map | negative | FR-71 | The route planner refuses a trip that cannot be planned and says why | Pick the same city twice, repeat a stop, enter 20 km/h, clear the origin | Each case shows its own message and no summary until fixed |
+| TC-E-194 | Live map | negative | FR-70 | A customer who opens the planner link still gets tracking only | Open the planner link and another container as a customer | The tracking view opens, no planner, and a container outside the customer's scope is not selected |
+| TC-E-195 | Live map | regression | FR-68 | The live map works in Arabic with right to left layout and Arabic city names | Switch to Arabic and open the planner | Arabic heading, rtl direction, Arabic labels and no sideways scroll |
+| TC-E-196 | Live map | regression | FR-68 | The live map and the route planner have no serious accessibility violations | Run the accessibility scan for every role, the planner and its error state | No serious or critical violations |
+| TC-E-197 | Live map | regression | FR-68 | The live map fits desktop, tablet and phone without sideways scrolling and keeps 40 px controls | Open at 1360, 768 and 390 px wide | No horizontal scroll, a map taller than 300 px and controls at least 40 px tall |
+| TC-E-198 | Live map | regression | FR-68 | Clicking a container on the map selects it | Filter to critical containers and click a rendered point | The side panel opens for the container that was clicked |
