@@ -8,12 +8,15 @@ import { etaMs, currentDelayMin, journeyStatus, nextMilestone, progressShare, ty
 import { fmtDuration, fmtTime } from "@/lib/opsfmt";
 import { getProfile } from "@/lib/profiles";
 
+const CAP = 12;
+const ASSET_CAP = 50;
 const COLUMNS: JourneyStatus[] = ["planned", "dispatched", "in_transit", "delayed", "completed"];
 
 export default function OperationsPage() {
   const { t, lang, journeys, fleet, alertsReady, apiError, retry, persona } = useApp();
   const [tab, setTab] = useState<"journeys" | "assets">("journeys");
   const [q, setQ] = useState("");
+  const [open, setOpen] = useState<Record<string, boolean>>({});
   const city = (id: string) => (lang === "ar" ? CITIES[id].ar : CITIES[id].en);
   const rows = useMemo(() => journeys.map((j) => ({ j, status: journeyStatus(j) })), [journeys]);
   const shown = useMemo(() => {
@@ -51,6 +54,7 @@ export default function OperationsPage() {
         <div className="ik warn" data-testid="ops-k-delayed"><b>{count("delayed")}</b><span>{t("ops_k_delayed")}</span></div>
         <div className="ik" data-testid="ops-k-done"><b>{count("completed")}</b><span>{t("ops_k_done")}</span></div>
       </section>
+      <p className="coverage" data-testid="ops-coverage">{t("ops_coverage", { n: fleet.length.toLocaleString("en-US"), j: rows.length.toLocaleString("en-US") })}</p>
       <div className="queues" role="group" aria-label={t("ops_title")}>
         <button type="button" className="queue-tab" aria-pressed={tab === "journeys"} onClick={() => setTab("journeys")} data-testid="tab-journeys">{t("ops_tab_journeys")} <b>{rows.length}</b></button>
         <button type="button" className="queue-tab" aria-pressed={tab === "assets"} onClick={() => setTab("assets")} data-testid="tab-assets">{t("ops_tab_assets")} <b>{rows.length}</b></button>
@@ -62,10 +66,13 @@ export default function OperationsPage() {
         <div className="board" data-testid="journey-board">
           {COLUMNS.map((s) => {
             const col = shown.filter((r) => r.status === s);
+            const all = open[s] || col.length <= CAP + 2;
+            const vis = all ? col : col.slice(0, CAP);
             return (
               <section key={s} className={`bcol bc-${s}`} aria-label={t(`ops_status_${s}` as const)} data-testid={`col-${s}`}>
-                <h2>{t(`ops_status_${s}` as const)} <span className="muted">{col.length}</span></h2>
-                <ul className="jlist">{col.map(({ j }) => card(j, s))}</ul>
+                <h2>{t(`ops_status_${s}` as const)} <span className="muted" data-testid={`count-${s}`}>{col.length}</span></h2>
+                <ul className="jlist">{vis.map(({ j }) => card(j, s))}</ul>
+                {!all ? <button type="button" className="btn ghost small more" onClick={() => setOpen((o) => ({ ...o, [s]: true }))} data-testid={`more-${s}`}>{t("ops_show_all", { n: col.length })}</button> : null}
               </section>
             );
           })}
@@ -75,7 +82,7 @@ export default function OperationsPage() {
           <table className="table" data-testid="assets-table">
             <thead><tr><th>{t("ops_f_container")}</th><th>{t("ops_f_profile")}</th><th>{t("ops_f_plate")}</th><th>{t("ops_f_driver")}</th><th>{t("ops_f_customer")}</th><th>{t("ops_f_seal")}</th><th>{t("ops_tab_journeys")}</th></tr></thead>
             <tbody>
-              {shown.map(({ j }) => (
+              {(open.assets ? shown : shown.slice(0, ASSET_CAP)).map(({ j }) => (
                 <tr key={j.id} data-testid="asset-row">
                   <td>{j.containerId}{j.source === "planned" ? <span className="chip new">{t("ops_new_badge")}</span> : null}</td>
                   <td>{lang === "ar" ? getProfile(j.profileId)?.name.ar : getProfile(j.profileId)?.name.en}{j.setpointC !== null ? ` · ${j.setpointC} °C` : ""}</td>
@@ -85,6 +92,7 @@ export default function OperationsPage() {
               ))}
             </tbody>
           </table>
+          {!open.assets && shown.length > ASSET_CAP ? <button type="button" className="btn ghost small more" onClick={() => setOpen((o) => ({ ...o, assets: true }))} data-testid="more-assets">{t("ops_show_all", { n: shown.length })}</button> : null}
         </div>
       )}
     </div>
