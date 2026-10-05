@@ -26,3 +26,6 @@ web/lib/journey.ts
 web/lib/analytics.ts
 services/api/public
 web/lib/roads.ts
+web/lib/cases.ts
+web/lib/partners.ts
+web/lib/people.ts
