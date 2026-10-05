@@ -27,17 +27,21 @@ async function planTo(page: Page, from: string, to: string, via: string[] = [], 
 }
 
 test.describe("Journey operations module", () => {
-  test("TC-E-146 The Operations page lists 11 journeys on a board with a count for each status @regression", async ({ page }) => {
+  test("TC-E-146 The Operations page puts all 1,000 containers on a journey board with a count for each status @regression", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: "Operations" }).click();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Journey operations");
-    await expect(page.getByTestId("journey-card")).toHaveCount(11);
-    await expect(page.getByTestId("col-planned").getByTestId("journey-card")).toHaveCount(2);
-    await expect(page.getByTestId("col-in_transit").getByTestId("journey-card")).toHaveCount(6);
-    await expect(page.getByTestId("col-delayed").getByTestId("journey-card")).toHaveCount(2);
-    await expect(page.getByTestId("col-completed").getByTestId("journey-card")).toHaveCount(1);
-    await expect(page.getByTestId("ops-k-transit")).toContainText("6");
-    await expect(page.getByTestId("ops-k-delayed")).toContainText("2");
+    await expect(page.getByTestId("ops-coverage")).toContainText("All 1,000 containers");
+    await expect(page.getByTestId("tab-journeys")).toContainText("1000");
+    await expect(page.getByTestId("count-planned")).toHaveText("2");
+    await expect(page.getByTestId("count-in_transit")).toHaveText("926");
+    await expect(page.getByTestId("count-delayed")).toHaveText("71");
+    await expect(page.getByTestId("count-completed")).toHaveText("1");
+    await expect(page.getByTestId("ops-k-transit")).toContainText("926");
+    await expect(page.getByTestId("ops-k-delayed")).toContainText("71");
+    await expect(page.getByTestId("col-in_transit").getByTestId("journey-card")).toHaveCount(12);
+    await page.getByTestId("more-in_transit").click();
+    await expect(page.getByTestId("col-in_transit").getByTestId("journey-card")).toHaveCount(926);
   });
 
   test("TC-E-147 Searching the board by container, journey or customer narrows the cards @regression", async ({ page }) => {
@@ -85,7 +89,7 @@ test.describe("Journey operations module", () => {
     await page.getByTestId("log-next-btn").click();
     await expect(page.getByTestId("journey-status")).toHaveText("Delayed");
     await page.goto("/operations/");
-    await expect(page.getByTestId("col-delayed").getByTestId("journey-card")).toHaveCount(3);
+    await expect(page.getByTestId("count-delayed")).toHaveText("72");
   });
 
   test("TC-E-151 A rest or fuel stop can be skipped and is shown as skipped @progression", async ({ page }) => {
@@ -116,16 +120,17 @@ test.describe("Journey operations module", () => {
     await expect(page.getByTestId("review")).toContainText("SC-2001");
     await expect(page.getByTestId("review")).toContainText("Jeddah → Riyadh");
     await page.getByTestId("dispatch-btn").click();
-    await expect(page).toHaveURL(/operations\/journey\/\?id=J-1012/);
-    await expect(page.getByTestId("journey-title")).toHaveText("J-1012");
+    await expect(page).toHaveURL(/operations\/journey\/\?id=J-2001/);
+    await expect(page.getByTestId("journey-title")).toHaveText("J-2001");
     await expect(page.getByTestId("journey-status")).toHaveText("Planned");
     await page.goto("/operations/");
-    await expect(page.getByTestId("journey-card")).toHaveCount(12);
+    await expect(page.getByTestId("tab-journeys")).toContainText("1001");
+    await expect(page.getByTestId("count-planned")).toHaveText("3");
     await page.getByTestId("tab-assets").click();
     await expect(page.getByTestId("asset-row").first()).toContainText("SC-2001");
     await expect(page.getByTestId("asset-row").first()).toContainText("ABC 1234");
     await page.reload();
-    await expect(page.getByTestId("journey-card")).toHaveCount(12);
+    await expect(page.getByTestId("tab-journeys")).toContainText("1001");
   });
 
   test("TC-E-154 The first step names what is missing and does not move on @negative", async ({ page }) => {
