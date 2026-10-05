@@ -92,7 +92,7 @@ export default function FleetPage() {
       <div className="grid-main" id="fleet-map">
         <section className="card map-card">
           <KsaMap label={t("map_label")} dots={dots} onSelect={setSelected} zoomLabels={{ in: t("zoom_in"), out: t("zoom_out"), reset: t("zoom_reset") }}
-            legend={{ title: t("legend_title"), items: [{ color: STATUS_COLOR.normal, text: t("status_normal") }, { color: STATUS_COLOR.warning, text: t("status_warning") }, { color: STATUS_COLOR.critical, text: t("legend_critical_pulse"), pulse: true }, { color: "#5c6660", text: t("legend_offline"), hollow: true }] }} hint={t("map_hint")} truck={sel ? { lon: sel.lon, lat: sel.lat } : null}
+            legend={{ title: t("legend_title"), items: [{ color: STATUS_COLOR.normal, text: t("status_normal") }, { color: STATUS_COLOR.warning, text: t("status_warning") }, { color: STATUS_COLOR.critical, text: t("legend_critical_pulse"), pulse: true }, { color: "#5f6b80", text: t("legend_offline"), hollow: true }] }} hint={t("map_hint")} truck={sel ? { lon: sel.lon, lat: sel.lat } : null}
             cities={Object.values(CITIES).map((c) => ({ id: c.id, lon: c.lon, lat: c.lat, name: c[lang] }))} />
           <p className="muted small" aria-live="polite" data-testid="showing">{t("showing", { shown: filtered.length.toLocaleString("en-US"), total: scope.length.toLocaleString("en-US") })}</p>
         </section>
