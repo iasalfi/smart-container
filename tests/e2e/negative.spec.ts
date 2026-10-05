@@ -84,14 +84,14 @@ test.describe("Negative: bad input, missing data, blocked actions", () => {
     await expect(page.getByTestId("not-found")).toContainText("Not available");
   });
 
-  test("TC-E-059 Close is disabled before acknowledge, Acknowledge disabled after @negative", async ({ page }) => {
+  test("TC-E-059 Close is disabled until the alert is resolved, Acknowledge disabled after it is done @negative", async ({ page }) => {
     await page.goto("/alerts/");
     const row = page.getByTestId("alert-row").first();
     await expect(row.getByTestId("close-btn")).toBeDisabled();
     await expect(row.getByTestId("ack-btn")).toBeEnabled();
     await row.getByTestId("ack-btn").click();
     await expect(row.getByTestId("ack-btn")).toBeDisabled();
-    await expect(row.getByTestId("close-btn")).toBeEnabled();
+    await expect(row.getByTestId("close-btn")).toBeDisabled();
   });
 
   test("TC-E-060 Corrupted saved state does not break the app @negative", async ({ page }) => {
