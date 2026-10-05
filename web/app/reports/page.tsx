@@ -11,7 +11,7 @@ import type { Key } from "@/lib/i18n";
 const PAGE = 25;
 
 export default function ReportsPage() {
-  const { t, lang, persona, fleet, alerts, journeys, tickets, apiError, retry } = useApp();
+  const { t, lang, persona, fleet, alerts, journeys, tickets, apiError, retry, registry } = useApp();
   const list = REPORTS[persona];
   const [pick, setPick] = useState<ReportId | null>(null);
   const [cargo, setCargo] = useState("all");
@@ -20,7 +20,7 @@ export default function ReportsPage() {
   const id: ReportId = pick && list.includes(pick) ? pick : list[0];
   const base = useMemo(() => scopeOf(persona, fleet ?? [], CUSTOMER_PERSONA_NAME), [persona, fleet]);
   const scope = useMemo(() => (cargo === "all" ? base : base.filter((c) => c.profileId === cargo)), [base, cargo]);
-  const report = useMemo(() => buildReport(id, { scope, alerts: alertsIn(alerts, scope), journeys: journeysIn(journeys, scope), tickets, nowMs: SNAPSHOT_MS }), [id, scope, alerts, journeys, tickets]);
+  const report = useMemo(() => buildReport(id, { scope, alerts: alertsIn(alerts, scope), journeys: journeysIn(journeys, scope), tickets, nowMs: SNAPSHOT_MS, registry }), [id, scope, alerts, journeys, tickets, registry]);
   const cargoName = (pid: string) => PROFILES.find((p) => p.id === pid)?.name[lang] ?? pid;
   const show = (v: Cell, c: Col): string => {
     switch (c.kind) {
@@ -30,6 +30,7 @@ export default function ReportsPage() {
       case "status": case "sev": return t(`status_${v}` as Key);
       case "alert": return t(`alert_type_${v}` as Key);
       case "cargo": return cargoName(String(v));
+      case "risk": return t(`pp_risk_${v}` as Key);
       case "jstatus": return t(`ops_status_${v}` as Key);
       default: return String(v);
     }
