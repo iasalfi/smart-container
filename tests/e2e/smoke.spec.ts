@@ -12,7 +12,7 @@ test("TC-S-002 Production smoke: a container page and alerts load @regression", 
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.goto("/container/?id=SC-1060");
   await expect(page.getByTestId("container-title")).toHaveText("SC-1060");
-  await page.goto("/alerts/");
+  await page.goto("/alerts/?view=alarms");
   await expect(page.getByTestId("alert-row").first()).toBeVisible();
   expect(errors).toEqual([]);
 });
