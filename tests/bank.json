@@ -2096,8 +2096,8 @@
     "suite": "progression",
     "category": "feature",
     "ref": "DM-01",
-    "title": "The status chart filters the fleet and toggles back",
-    "steps": "Click the Critical status chart row twice",
+    "title": "The status tiles filter the fleet and toggle back",
+    "steps": "Click the Critical status tile twice",
     "expected": "27 of 1,000, then back to 1,000 of 1,000"
   },
   {
@@ -2220,5 +2220,60 @@
     "title": "The customer view scopes the hero figures to that customer",
     "steps": "Switch to the Customer view",
     "expected": "Hero and counts show only that customer, not 1,000"
+  },
+  {
+    "id": "TC-E-124",
+    "area": "UI",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "ui",
+    "ref": "DM-01",
+    "title": "The hero shows a road scene with three trucks and an icon on each figure",
+    "steps": "Open the fleet page",
+    "expected": "Road scene with three trucks; each of the four figures has an icon"
+  },
+  {
+    "id": "TC-E-125",
+    "area": "Fleet",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "DM-01",
+    "title": "Selecting a container opens its live twin with a thermometer, gauges and a truck on the map",
+    "steps": "Click a dot on the map",
+    "expected": "Card shows the container, thermometer, five readings; a truck marks the container on the map"
+  },
+  {
+    "id": "TC-E-126",
+    "area": "Fleet",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "DM-03",
+    "title": "Alert types appear as icon tiles whose counts add up to the open alerts",
+    "steps": "Open the fleet page",
+    "expected": "Seven icon tiles whose counts total 102, matching the open alerts figure"
+  },
+  {
+    "id": "TC-E-127",
+    "area": "UI",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "ui",
+    "ref": "DM-01",
+    "title": "Each table row shows a container icon and the map labels the seven cities",
+    "steps": "Open the fleet page",
+    "expected": "Container icon on each row; seven city labels on the map"
+  },
+  {
+    "id": "TC-E-128",
+    "area": "Fleet",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "NFR-10",
+    "title": "The landing page states each fact once, with no repeated status chart or event list",
+    "steps": "Open the fleet page",
+    "expected": "No status donut, no latest events list, no intro paragraph repeating the fleet size"
   }
 ]
