@@ -43,6 +43,8 @@ Errors are JSON: `{"error":{"code":"container_not_found","message":"..."}}` with
 
 **Analytics (`/analytics/`) and Reports (`/reports/`).** Both follow the "View as" persona, which stands in for the signed-in user (the demo has no real login). The shared logic is `packages/domain/src/analytics.ts`. The operator gets journey delays, corridor load and service desk health; the quality manager gets cold chain compliance, cargo health and temperature alerts; the security officer gets doors, locks, route deviations and unscheduled stops; a customer gets arrivals, status and cargo mix for its own containers only. Each persona has its own four KPIs and its own report catalogue (daily operations, journey on-time, cold chain, health watch list, security incidents, service level, shipment status). A report can be filtered by cargo and text, printed, or exported as CSV (UTF-8 with a byte order mark so Excel reads Arabic). The Fleet dashboard has a persona strip with the same KPIs, and its alert-type chart and side panel follow the persona too.
 
+**Live map (`/live/`).** A MapLibre GL map (loaded from the jsDelivr CDN on first use) with two tabs. *Live tracking* puts every container the signed-in role may see on a real base map (OpenStreetMap vector tiles from OpenFreeMap, no key needed). Each corridor is fetched once from the OSRM routing service, and trucks are placed along that road at their progress, then advance on a demo clock (one second is one minute on the road) that can be paused. Selecting a container draws its whole road with the part already driven, the truck facing its direction of travel, both end cities, speed, distance left and arrival time, and the truck can be followed. Status filters and search narrow the map and the list, and a customer sees only its own containers. *Route planner* (operator, quality and security) takes an origin, up to two stops on the way, a destination, a departure and a speed, draws the road from OSRM with route options, and places the planned rest, fuel and overnight stops on it by distance. The container and journey pages link to the live map. When OSRM cannot be reached the map falls back to the planned corridor and says so; when the base map cannot load it draws routes on a plain background. Road geometry helpers are in `packages/domain/src/roads.ts` and the services are configured in `web/lib/maplib.ts` (`NEXT_PUBLIC_MAP_STYLE` swaps the base map). Browser tests answer the style and routing requests themselves; set `MAPLIBRE_DIST` to a folder holding `maplibre-gl.js` and `.css` to run them without internet.
+
 ## Run it locally
 
 ```bash
@@ -55,7 +57,7 @@ Or both in containers: `docker compose up --build` (web on 8080, API on 4100).
 
 ## Tests
 
-The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 293 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
+The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 315 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
 
 | Command | What it runs |
 |---|---|
