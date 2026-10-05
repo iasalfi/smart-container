@@ -110,7 +110,7 @@ test.describe("Landing page and dashboard", () => {
   });
 
   test("TC-E-119 The alerts page opens with a summary of open, critical, warning and handled alerts @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const sum = page.getByTestId("alerts-summary");
     await expect(sum).toBeVisible();
     await expect(sum).toContainText("102");
