@@ -13,6 +13,8 @@ const ICONS: Record<string, ReactNode> = {
   alerts: <path d="M12 3a6 6 0 00-6 6v3.6L4.3 15A1 1 0 005 16.700h14a1 1 0 00.7-1.700L18 12.600V9a6 6 0 00-6-6zm-2 15a2 2 0 004 0h-4z" />,
   operations: <path d="M4 5h16v2H4V5zm0 6h10v2H4v-2zm0 6h16v2H4v-2zm13-7.500l4 2.500-4 2.500V9.500z" />,
   analytics: <path d="M4 20V10h3.500v10H4zm6.300 0V4h3.500v16h-3.500zm6.300 0v-7H20v7h-3.400z" />,
+  maintenance: <path d="M22 19.600l-6.700-6.700a5.500 5.500 0 01-7.100-7.100l3.400 3.400 2.400-.6.600-2.400L11.200 3.400a5.500 5.500 0 017.100 7.100l6.700 6.700-3 2.400zM6 21a2 2 0 110-4 2 2 0 010 4z" />,
+  partners: <path d="M3 11l2-5h9v5h3l3 3v3h-2a2.500 2.500 0 01-5 0H9a2.500 2.500 0 01-5 0H3v-6zm4.500 7.500a1 1 0 100-2 1 1 0 000 2zm9 0a1 1 0 100-2 1 1 0 000 2z" />,
   reports: <path d="M6 2h8l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm7 1.500V8h4.500L13 3.500zM7 12v1.800h10V12H7zm0 3.500v1.800h10v-1.800H7z" />,
   admin: <path d="M12 8.500A3.500 3.500 0 1012 15.500 3.500 3.500 0 0012 8.500zm8.500 4.700l1.600 1.200-1.600 2.800-1.900-.6a7 7 0 01-1.600.9L16.700 19.500h-3.200l-.3-2a7 7 0 01-1.600-.9l-1.900.6-1.600-2.800 1.600-1.200a7 7 0 010-1.800L7.700 10.200l1.600-2.800 1.900.6a7 7 0 011.600-.9l.3-2h3.200l.3 2a7 7 0 011.600.9l1.900-.6 1.600 2.800-1.600 1.200c.1.600.1 1.200 0 1.800z" />,
 };
@@ -28,9 +30,10 @@ export function Sidebar() {
     { icon: "fleet", href: "/", label: t("nav_fleet"), match: (p: string) => p === "/" || p.startsWith("/container") || p.startsWith("/route") || p.startsWith("/health") || p.startsWith("/replay") || p.startsWith("/modules") || /^\/report(\/|$)/.test(p) },
     { icon: "live", href: "/live/", label: t("nav_live"), match: (p: string) => p.startsWith("/live") },
     { icon: "alerts", href: "/alerts/", label: t("nav_alerts"), match: (p: string) => p.startsWith("/alerts") },
+    ...(persona === "customer" ? [] : [{ icon: "maintenance", href: "/maintenance/", label: t("nav_maintenance"), match: (p: string) => p.startsWith("/maintenance") }]),
+    ...(persona === "customer" ? [] : [{ icon: "partners", href: "/partners/", label: t("nav_partners"), match: (p: string) => p.startsWith("/partners") }]),
     ...(persona === "customer" ? [] : [{ icon: "operations", href: "/operations/", label: t("nav_operations"), match: (p: string) => p.startsWith("/operations") }]),
-    { icon: "analytics", href: "/analytics/", label: t("nav_analytics"), match: (p: string) => p.startsWith("/analytics") },
-    { icon: "reports", href: "/reports/", label: t("nav_reports"), match: (p: string) => p.startsWith("/reports") },
+    { icon: "analytics", href: "/analytics/", label: t("nav_analytics"), match: (p: string) => p.startsWith("/analytics") || p.startsWith("/reports") },
     ...(persona === "customer" ? [] : [{ icon: "admin", href: "/admin/", label: t("nav_admin"), match: (p: string) => p.startsWith("/admin") }]),
   ];
   return (
