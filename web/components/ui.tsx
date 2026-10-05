@@ -18,7 +18,7 @@ export function Gauge({ value, label }: { value: number; label: string }) {
   return (
     <div className="gauge" role="img" aria-label={`${label} ${Math.round(value)}`} data-testid="health-gauge">
       <svg viewBox="0 0 100 100" width="120" height="120">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="#e7e2d6" strokeWidth="11" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="#e3e9f0" strokeWidth="11" />
         <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="11" strokeLinecap="round" strokeDasharray={`${(c * value) / 100} ${c}`} transform="rotate(-90 50 50)" />
         <text x="50" y="58" textAnchor="middle" fontSize="26" fontWeight="700" fill={color}>{Math.round(value)}</text>
       </svg>
