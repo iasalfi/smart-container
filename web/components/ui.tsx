@@ -78,6 +78,7 @@ export function ContainerHead({ c }: { c: Container }) {
       </div>
       <StatusPill status={c.status} />
       {!c.online ? <span className="pill pill-offline">{t("status_offline")}</span> : null}
+      <Link className="btn-sm" href={`/live/?id=${encodeURIComponent(c.id)}`} data-testid="track-live">{t("lv_track_link")}</Link>
     </div>
   );
 }
