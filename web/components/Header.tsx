@@ -12,6 +12,7 @@ export function Header() {
   const nav = [
     { href: "/", label: t("nav_fleet"), match: (p: string) => p === "/" || p.startsWith("/container") || p.startsWith("/route") || p.startsWith("/health") || p.startsWith("/replay") || p.startsWith("/modules") || p.startsWith("/report") },
     { href: "/alerts/", label: t("nav_alerts"), match: (p: string) => p.startsWith("/alerts") },
+    ...(persona === "customer" ? [] : [{ href: "/operations/", label: t("nav_operations"), match: (p: string) => p.startsWith("/operations") }]),
     ...(persona === "customer" ? [] : [{ href: "/admin/", label: t("nav_admin"), match: (p: string) => p.startsWith("/admin") }]),
   ];
   return (
