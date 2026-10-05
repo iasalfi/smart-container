@@ -2569,9 +2569,9 @@
     "suite": "regression",
     "category": "feature",
     "ref": "FR-60",
-    "title": "live fleet trips become journeys with a matching status and progress",
+    "title": "every container in the fleet has a journey, with a matching status and progress",
     "steps": "Seed journeys from the live fleet",
-    "expected": "At least ten journeys, eight on the road, two planned and one completed"
+    "expected": "1,000 journeys, one per container, 997 on the road, two planned, one completed and the offline devices delayed"
   },
   {
     "id": "TC-E-129",
@@ -2767,9 +2767,9 @@
     "suite": "regression",
     "category": "feature",
     "ref": "FR-60",
-    "title": "The Operations page lists 11 journeys on a board with a count for each status",
-    "steps": "Open Operations from the menu",
-    "expected": "11 journeys across Planned 2, In transit 6, Delayed 2, Completed 1"
+    "title": "The Operations page puts all 1,000 containers on a journey board with a count for each status",
+    "steps": "Open Operations from the menu, then show all in transit journeys",
+    "expected": "1,000 journeys: Planned 2, In transit 926, Delayed 71, Completed 1, and each column lists only 12 cards until Show all"
   },
   {
     "id": "TC-E-147",
@@ -2846,7 +2846,7 @@
     "ref": "FR-61",
     "title": "A new load can be on-boarded, planned and dispatched in five steps, and it stays after a reload",
     "steps": "Fill the five steps and dispatch",
-    "expected": "J-1012 is created, listed with its assets and kept after a reload"
+    "expected": "J-2001 is created, listed with its assets and kept after a reload"
   },
   {
     "id": "TC-E-154",
@@ -2998,8 +2998,8 @@
     "suite": "regression",
     "category": "ui",
     "ref": "NFR-10",
-    "title": "The theme is a dull pastel palette of sand, sage and dusty teal with a light top bar",
-    "steps": "Read the theme tokens and the top bar colour",
-    "expected": "Sand background, dusty teal, a light top bar and the hero gradient, with no old navy or blue"
+    "title": "The theme is a soft grey-blue canvas with a dark navy sidebar, a white top bar and an indigo accent",
+    "steps": "Read the theme tokens, the sidebar and the top bar colours",
+    "expected": "Grey-blue background, indigo accent, dark sidebar, white top bar and the hero gradient, with no old navy, blue or sand"
   }
 ]
