@@ -3,7 +3,7 @@ import { openFleet, openView, setLang, setPersona, num } from "./helpers";
 
 test.describe("Progression: new behaviour and state changes", () => {
   test("TC-E-030 An alert moves through acknowledge, in progress, resolved and closed @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const row = page.getByTestId("alert-row").first();
     await expect(row.getByTestId("alert-state")).toHaveText("Open");
     await row.getByTestId("ack-btn").click();
@@ -18,7 +18,7 @@ test.describe("Progression: new behaviour and state changes", () => {
   });
 
   test("TC-E-031 Escalation timer shows for critical open alerts @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     await page.getByTestId("sev-filter").selectOption("critical");
     const esc = page.getByTestId("escalation");
     await expect(esc.first()).toBeVisible();
@@ -26,7 +26,7 @@ test.describe("Progression: new behaviour and state changes", () => {
   });
 
   test("TC-E-032 Alert state survives a reload @progression", async ({ page }) => {
-    await page.goto("/alerts/");
+    await page.goto("/alerts/?view=alarms");
     const first = page.getByTestId("alert-row").first();
     const id = (await first.innerText()).match(/SC-\d{4}/)![0];
     await first.getByTestId("ack-btn").click();
@@ -79,7 +79,7 @@ test.describe("Progression: new behaviour and state changes", () => {
     await setPersona(page, "customer");
     await expect(page.getByTestId("kpi-total")).toContainText("127");
     await expect(page.getByTestId("fleet-sub")).toContainText("127");
-    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Admin" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Settings" })).toHaveCount(0);
   });
 
   test("TC-E-038 Quality view shows lowest cargo health panel @progression", async ({ page }) => {
