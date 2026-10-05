@@ -45,7 +45,7 @@ Or both in containers: `docker compose up --build` (web on 8080, API on 4100).
 
 ## Tests
 
-The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 202 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
+The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 207 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
 
 | Command | What it runs |
 |---|---|
