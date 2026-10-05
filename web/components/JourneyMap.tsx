@@ -27,7 +27,7 @@ export function JourneyMap({ plan, journey, height }: { plan: Plan; journey?: Jo
   return (
     <KsaMap key={shown.plan.points.join(">")}
       label={t("ops_map_label", { from: lang === "ar" ? a.ar : a.en, to: lang === "ar" ? b.ar : b.en })}
-      paths={[{ d: path, color: "#2f4f46", width: 3.5, dashed: true, label: t("ops_planned_road") }]}
+      paths={[{ d: path, color: "#2b3a55", width: 3.5, dashed: true, label: t("ops_planned_road") }]}
       pins={pins} cities={cities} truck={truck} focus={focus}
       zoomLabels={{ in: t("zoom_in"), out: t("zoom_out"), reset: t("zoom_reset") }} height={height}
     />
