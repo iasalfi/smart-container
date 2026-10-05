@@ -24,6 +24,6 @@ export function MilestoneIcon({ kind, size = 22 }: { kind: MilestoneKind; size?:
 }
 
 export const KIND_COLOR: Record<MilestoneKind, string> = {
-  loaded: "#4f8f84", pretrip_check: "#4f8f84", port_gate: "#6b9a98", depart: "#2f4f46", rest: "#dcae5f", fuel: "#c9855a",
-  overnight: "#8a7fb0", waypoint: "#6b9a98", customs: "#a89f8b", arrive: "#2f6a48", delivered: "#2f6a48",
+  loaded: "#5a66f1", pretrip_check: "#5a66f1", port_gate: "#8d97f5", depart: "#2b3a55", rest: "#dcae5f", fuel: "#c9855a",
+  overnight: "#8a7fb0", waypoint: "#8d97f5", customs: "#8794a8", arrive: "#2f6a48", delivered: "#2f6a48",
 };
