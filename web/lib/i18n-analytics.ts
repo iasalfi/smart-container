@@ -1,6 +1,6 @@
 /** Analytics, reports and persona dashboard strings. Merged into i18n.ts. */
 export const enAn = {
-  nav_analytics: "Analytics",
+  nav_analytics: "Value",
   nav_reports: "Reports",
   an_title: "Analytics",
   an_sub_operator: "Journey delays, corridor load and service desk health across the whole fleet.",
@@ -121,7 +121,7 @@ export const enAn = {
 };
 
 export const arAn: Record<keyof typeof enAn, string> = {
-  nav_analytics: "التحليلات",
+  nav_analytics: "القيمة",
   nav_reports: "التقارير",
   an_title: "التحليلات",
   an_sub_operator: "تأخر الرحلات وحمل المسارات وصحة مكتب الخدمة عبر الأسطول كله.",
