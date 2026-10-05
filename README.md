@@ -83,3 +83,4 @@ Repository variables: `API_URL` (the API's public domain, for example `https://s
 Also create two GitHub environments, `production-api` and `production-web`. Add required reviewers only if you want a manual approval before shipping.
 
 Both Vercel projects must keep an empty Root Directory: the pipeline runs the Vercel CLI from inside `services/api` and `web`.
+
