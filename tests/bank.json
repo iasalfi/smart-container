@@ -963,8 +963,8 @@
     "suite": "regression",
     "category": "feature",
     "ref": "DM-01",
-    "title": "Main navigation reaches Fleet, Alerts and Admin",
-    "steps": "Click the links",
+    "title": "Main navigation reaches the control tower, Cases and Settings",
+    "steps": "Click Cases, Settings and Control tower",
     "expected": "Pages load, aria-current set"
   },
   {
@@ -3020,9 +3020,9 @@
     "suite": "regression",
     "category": "feature",
     "ref": "FR-65",
-    "title": "each persona gets its own four KPIs and widget set",
+    "title": "Each persona gets its own KPIs, plus the carrier and driver scores every persona shares",
     "steps": "Compute the analytics for every persona",
-    "expected": "Four unique KPI ids per persona, the widget list of that persona, finite values"
+    "expected": "At least six KPIs per persona, shared score ids, unique persona ids, the widget list of that persona"
   },
   {
     "id": "TC-U-119",
@@ -3130,9 +3130,9 @@
     "suite": "regression",
     "category": "feature",
     "ref": "FR-65",
-    "title": "The sidebar lists Analytics and Reports for every persona and marks the current one",
+    "title": "The sidebar lists Value for every persona, Reports sits under it, and the current page is marked",
     "steps": "Check the sidebar for each persona and open Reports",
-    "expected": "Both links for all personas, Reports marked current and Fleet not"
+    "expected": "Value link for all personas, no Reports link, Reports reached from Value, Value marked current"
   },
   {
     "id": "TC-E-173",
@@ -3463,5 +3463,335 @@
     "title": "Clicking a container on the map selects it",
     "steps": "Filter to critical containers and click a rendered point",
     "expected": "The side panel opens for the container that was clicked"
+  },
+  {
+    "id": "TC-A-053",
+    "area": "Partners",
+    "type": "api",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-72",
+    "title": "Partners lists the 8 freight companies with a scorecard each",
+    "steps": "GET /api/v1/partners",
+    "expected": "8 partners with scorecards covering all 1,000 containers"
+  },
+  {
+    "id": "TC-A-054",
+    "area": "Partners",
+    "type": "api",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-72",
+    "title": "Partners can be filtered by status",
+    "steps": "GET /api/v1/partners?status=probation",
+    "expected": "Only probation partners"
+  },
+  {
+    "id": "TC-A-055",
+    "area": "Partners",
+    "type": "api",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-72",
+    "title": "An unknown partner status returns 400 with an error code",
+    "steps": "GET /api/v1/partners?status=gold",
+    "expected": "400 invalid_partner_status"
+  },
+  {
+    "id": "TC-A-056",
+    "area": "Drivers",
+    "type": "api",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-73",
+    "title": "Drivers lists 320 drivers with paging",
+    "steps": "GET /api/v1/drivers with limit and offset",
+    "expected": "320 total, page of 10 starting at the 6th driver"
+  },
+  {
+    "id": "TC-A-057",
+    "area": "Drivers",
+    "type": "api",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-73",
+    "title": "Drivers can be filtered by partner and by risk band",
+    "steps": "GET /api/v1/drivers filtered by partner and risk",
+    "expected": "40 for one partner, risk bands match the scores"
+  },
+  {
+    "id": "TC-A-058",
+    "area": "Drivers",
+    "type": "api",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-73",
+    "title": "Bad driver filters return 400 with an error code",
+    "steps": "Send bad partner, risk, limit and offset values and a POST",
+    "expected": "400 with the right error code each time, 405 for POST"
+  },
+  {
+    "id": "TC-E-199",
+    "area": "Partners",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-72",
+    "title": "The partners page lists the 8 freight companies with a grade and the containers each carries",
+    "steps": "Open Partners and filter by status",
+    "expected": "8 rows with grades, probation filter shows 2"
+  },
+  {
+    "id": "TC-E-200",
+    "area": "Partners",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-72",
+    "title": "An operator adds a partner, sees it in the table, and it is still there after a reload",
+    "steps": "Add a partner and reload",
+    "expected": "9 rows, message names the partner, still there after reload"
+  },
+  {
+    "id": "TC-E-201",
+    "area": "Partners",
+    "type": "e2e",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-72",
+    "title": "A partner with bad details is refused with a message for each problem and nothing is saved",
+    "steps": "Submit a partner with five bad fields, then one",
+    "expected": "Five messages, then one, nothing saved"
+  },
+  {
+    "id": "TC-E-202",
+    "area": "Partners",
+    "type": "e2e",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-72",
+    "title": "A partner name that already exists is refused, whatever the letter case",
+    "steps": "Add a partner whose name differs only in letter case",
+    "expected": "Refused as already used"
+  },
+  {
+    "id": "TC-E-203",
+    "area": "Partners",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-72",
+    "title": "An operator edits a partner and the change shows at once",
+    "steps": "Edit a partner status to suspended",
+    "expected": "The row and the status filter show it at once"
+  },
+  {
+    "id": "TC-E-204",
+    "area": "Drivers",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-73",
+    "title": "The drivers tab lists 320 drivers, filters by partner and risk, and pages through them",
+    "steps": "Open the drivers tab, page, filter by partner and risk",
+    "expected": "320 drivers, 25 per page, filters narrow the list"
+  },
+  {
+    "id": "TC-E-205",
+    "area": "Drivers",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-73",
+    "title": "An operator adds a driver and the licence number must be new",
+    "steps": "Add a driver and search for them",
+    "expected": "321 drivers, new driver starts at score 100"
+  },
+  {
+    "id": "TC-E-206",
+    "area": "Drivers",
+    "type": "e2e",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-73",
+    "title": "A driver with a bad phone, a short licence number or a taken licence number is refused",
+    "steps": "Submit a driver with bad phone and licence, then a taken licence",
+    "expected": "Three messages, then an already used message, no extra driver"
+  },
+  {
+    "id": "TC-E-207",
+    "area": "Drivers",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-74",
+    "title": "Logging a driver event lowers the safety score by the event's points and a future date is refused",
+    "steps": "Log a rest breach with a future date, then today",
+    "expected": "Future date refused, today lowers the score by 8"
+  },
+  {
+    "id": "TC-E-208",
+    "area": "Drivers",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-74",
+    "title": "Assigning a driver to a container shows the new driver on the container page",
+    "steps": "Assign a new driver to SC-1060 and open the container",
+    "expected": "Driver and partner change on the page and in the header"
+  },
+  {
+    "id": "TC-E-209",
+    "area": "Drivers",
+    "type": "e2e",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-74",
+    "title": "Assigning to a container that does not exist, or with no driver chosen, is refused",
+    "steps": "Assign to an unknown container, then with no driver",
+    "expected": "Both refused with a message"
+  },
+  {
+    "id": "TC-E-210",
+    "area": "Access",
+    "type": "e2e",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-72",
+    "title": "A customer cannot open the partner and maintenance pages",
+    "steps": "Switch to customer and open Partners and Maintenance",
+    "expected": "No nav links and a not available state"
+  },
+  {
+    "id": "TC-E-211",
+    "area": "Access",
+    "type": "e2e",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-72",
+    "title": "Quality and security can read the partner records but cannot change them",
+    "steps": "Open Partners as quality and security",
+    "expected": "Read only note, no add, edit, log or assign"
+  },
+  {
+    "id": "TC-E-212",
+    "area": "Access",
+    "type": "e2e",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-72",
+    "title": "Admin can remove a partner with no containers but not one that still carries them",
+    "steps": "Remove a partner in Settings, with and without containers",
+    "expected": "Blocked while it carries containers, removed when empty"
+  },
+  {
+    "id": "TC-E-213",
+    "area": "Cases",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-76",
+    "title": "The alerts page opens on cases, which are fewer than the alarms behind them, and the toggle shows every alarm",
+    "steps": "Open Cases and switch to All alarms",
+    "expected": "Fewer cases than 102 alarms, merged chips, 102 alarm rows in the other view"
+  },
+  {
+    "id": "TC-E-214",
+    "area": "Cases",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-76",
+    "title": "Cases can be searched by container and each one shows how late the response and fix are",
+    "steps": "Search cases and check the breach lines",
+    "expected": "Search narrows to one, empty state, response and fix breaches shown"
+  },
+  {
+    "id": "TC-E-215",
+    "area": "Cases",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-76",
+    "title": "Taking a case makes you its owner and moves it off the unassigned list, and resolving it closes it",
+    "steps": "Take a case, then resolve it",
+    "expected": "Owner is you, case leaves the list, shows under resolved, unassigned alarms drop below 102"
+  },
+  {
+    "id": "TC-E-216",
+    "area": "Maintenance",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-77",
+    "title": "A case that needs a repair opens a work order, which moves across the board and releases the container",
+    "steps": "Open a work order from a repair case and run it through the board",
+    "expected": "Case moves into maintenance, order crosses five columns, release resolves the case"
+  },
+  {
+    "id": "TC-E-217",
+    "area": "Maintenance",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-77",
+    "title": "The maintenance board shows example orders in several stages and a list of trackers that need a visit",
+    "steps": "Open the maintenance board",
+    "expected": "Example orders in three or more columns, device list shown"
+  },
+  {
+    "id": "TC-E-218",
+    "area": "Maintenance",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-77",
+    "title": "A tracker that needs a visit gets a preventive work order once, and the share of preventive work goes up",
+    "steps": "Raise a work order from the device list",
+    "expected": "Open count goes up by one, order in triage, button replaced by a note"
+  },
+  {
+    "id": "TC-E-219",
+    "area": "Access",
+    "type": "e2e",
+    "suite": "negative",
+    "category": "negative",
+    "ref": "FR-77",
+    "title": "Quality and security can see the board but cannot move orders or raise new ones",
+    "steps": "Open the board and Cases as quality and security",
+    "expected": "No move, raise, take or open work order actions"
+  },
+  {
+    "id": "TC-E-220",
+    "area": "Maintenance",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-77",
+    "title": "Admin can change the tracker triggers, the maintenance list follows, and bad values are refused",
+    "steps": "Change the tracker battery trigger in Settings",
+    "expected": "Bad value refused, saved value lengthens the device list, reset restores it"
+  },
+  {
+    "id": "TC-E-221",
+    "area": "Control tower",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-76",
+    "title": "The control tower lists the cases that need you now and links to all of them",
+    "steps": "Open the control tower",
+    "expected": "Needs you now panel with up to 6 cases and a link to all"
+  },
+  {
+    "id": "TC-E-222",
+    "area": "Lifecycle",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-78",
+    "title": "A container shows six lifecycle stages with the current one marked, and its driver and carrier",
+    "steps": "Open SC-1060",
+    "expected": "Six stages, in transit current, driver and carrier named"
   }
 ]
