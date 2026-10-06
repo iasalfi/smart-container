@@ -4123,5 +4123,71 @@
     "title": "The partner and driver scorecards are offered to the right personas and list real rows",
     "steps": "Build the partner and driver scorecards",
     "expected": "Offered to the right personas, 100 driver rows sorted by score"
+  },
+  {
+    "id": "TC-U-149",
+    "area": "Language",
+    "type": "unit",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-81",
+    "title": "Digits, separators, percent and units become Arabic",
+    "steps": "Convert numbers, percent and units to Arabic",
+    "expected": "Arabic-Indic digits, Arabic separators, percent sign and units"
+  },
+  {
+    "id": "TC-U-150",
+    "area": "Language",
+    "type": "unit",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-81",
+    "title": "Names, cities and plates are written in Arabic",
+    "steps": "Convert a driver name, a route and a plate",
+    "expected": "Arabic name, Arabic city names, Arabic plate letters with Arabic digits"
+  },
+  {
+    "id": "TC-U-151",
+    "area": "Language",
+    "type": "unit",
+    "suite": "regression",
+    "category": "feature",
+    "ref": "FR-81",
+    "title": "Identifiers stay Latin and plain text is returned unchanged",
+    "steps": "Convert identifiers, Arabic text and an empty string",
+    "expected": "SC, WO and P1 codes untouched, Arabic and empty text unchanged"
+  },
+  {
+    "id": "TC-E-232",
+    "area": "Language",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "ux",
+    "ref": "FR-81",
+    "title": "In Arabic the main pages show no Western digits or English words",
+    "steps": "Open ten pages in Arabic and read every text node",
+    "expected": "No Western digits or English words except codes, EN and AR, CSV, PDF and map credits"
+  },
+  {
+    "id": "TC-E-233",
+    "area": "Language",
+    "type": "e2e",
+    "suite": "regression",
+    "category": "ux",
+    "ref": "FR-81",
+    "title": "Switching back to English restores digits and names",
+    "steps": "Switch to Arabic and back on the partners page",
+    "expected": "Arabic digits in Arabic, Western digits and English labels restored"
+  },
+  {
+    "id": "TC-E-234",
+    "area": "Language",
+    "type": "e2e",
+    "suite": "progression",
+    "category": "feature",
+    "ref": "FR-81",
+    "title": "Text added while in Arabic is also converted",
+    "steps": "Add a driver while in Arabic",
+    "expected": "The new list shows Arabic digits only, apart from codes"
   }
 ]
