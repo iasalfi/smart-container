@@ -100,7 +100,7 @@ export function Widget({ id, a }: { id: WidgetId; a: Analytics }) {
       return (
         <Panel id={id} title={title}>
           <p data-testid="an-dev-total"><b>{t("an_dev_total", { n: a.devices.total })}</b></p>
-          <BarList rows={a.devices.byReason.map((r) => ({ label: t(`wo_reason_${r.key}` as Key), n: r.n }))} />
+          <BarList rows={a.devices.byReason.map((r) => ({ label: t((r.key.startsWith("tracker_") ? `wo_kind_${r.key}` : `wo_reason_${r.key}`) as Key), n: r.n }))} />
         </Panel>
       );
     case "cargo_mix":
