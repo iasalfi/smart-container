@@ -323,3 +323,170 @@ test.describe("Cases and maintenance", () => {
     await expect(page.getByTestId("mt-advance")).toHaveCount(0);
     await expect(page.getByTestId("mt-raise")).toHaveCount(0);
     await page.goto("/alerts/");
+    await setPersona(page, "security");
+    await expect(page.getByTestId("case-take")).toHaveCount(0);
+    await expect(page.getByTestId("case-wo-open")).toHaveCount(0);
+  });
+
+  test("TC-E-220 Admin can change the tracker triggers, the maintenance list follows, and bad values are refused @progression", async ({ page }) => {
+    await page.goto("/maintenance/");
+    const before = Number((await page.getByTestId("mt-k-devices").innerText()).match(/\d+/)![0]);
+    await page.goto("/admin/");
+    await page.getByTestId("lim-battery").fill("0");
+    await page.getByTestId("lim-save").click();
+    await expect(page.getByTestId("lim-msg")).toContainText(/whole numbers/i);
+    await page.getByTestId("lim-battery").fill("60");
+    await page.getByTestId("lim-save").click();
+    await expect(page.getByTestId("lim-msg")).toContainText(/saved/i);
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Maintenance" }).click();
+    const after = await page.getByTestId("mt-k-devices").innerText();
+    expect(Number(after.match(/\d+/)![0])).toBeGreaterThan(before);
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Settings" }).click();
+    await page.getByTestId("lim-reset").click();
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Maintenance" }).click();
+    await expect(page.getByTestId("mt-k-devices")).toContainText(String(before));
+  });
+
+  test("TC-E-221 The control tower lists the cases that need you now and links to all of them @regression", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("panel-alerts")).toContainText("Needs you now");
+    const n = await page.getByTestId("needs-row").count();
+    expect(n).toBeGreaterThan(0);
+    expect(n).toBeLessThanOrEqual(6);
+    await expect(page.getByTestId("needs-sub")).toContainText("102");
+    await page.getByTestId("needs-all").click();
+    await expect(page).toHaveURL(/\/alerts\/$/);
+    await expect(page.getByTestId("cases-view")).toBeVisible();
+  });
+});
+
+test.describe("Lifecycle, analytics and reports for people", () => {
+  test("TC-E-222 A container shows six lifecycle stages with the current one marked, and its driver and carrier @regression", async ({ page }) => {
+    await page.goto("/container/?id=SC-1060");
+    const spine = page.getByTestId("lifecycle-spine");
+    await expect(spine).toBeVisible();
+    await expect(spine.locator("li")).toHaveCount(6);
+    await expect(spine).toHaveAttribute("data-stage", "in_transit");
+    await expect(spine.locator('li[aria-current="step"]')).toHaveCount(1);
+    await expect(page.getByTestId("lc-in_transit")).toHaveAttribute("aria-current", "step");
+    await expect(page.getByTestId("detail-driver")).toHaveText("Abdullah Al-Asmari");
+    await expect(page.getByTestId("detail-partner")).toHaveText("Hail Cold Chain Carriers");
+    await expect(page.getByTestId("lc-next")).toHaveCount(0);
+  });
+
+  test("TC-E-223 A delivered container can be marked unloaded and returned to service, and the stage follows @progression", async ({ page }) => {
+    await page.goto("/container/?id=SC-1100");
+    await expect(page.getByTestId("lifecycle-spine")).toHaveAttribute("data-stage", "at_destination");
+    await page.getByTestId("lc-next").click();
+    await expect(page.getByTestId("lifecycle-spine")).toHaveAttribute("data-stage", "unloaded_inspected");
+    await page.getByTestId("lc-next").click();
+    await expect(page.getByTestId("lifecycle-spine")).toHaveAttribute("data-stage", "back_in_service");
+    await expect(page.getByTestId("lc-next")).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByTestId("lifecycle-spine")).toHaveAttribute("data-stage", "back_in_service");
+  });
+
+  test("TC-E-224 A container in repair shows the maintenance branch on its lifecycle @regression", async ({ page }) => {
+    await page.goto("/maintenance/");
+    const cid = (await page.getByTestId("mt-card").first().locator("a").innerText()).trim();
+    await page.goto(`/container/?id=${cid}`);
+    await expect(page.getByTestId("lc-branch")).toContainText("WO-");
+  });
+
+  test("TC-E-225 Every persona sees the carrier and driver scores, and each gets its own people widgets @regression", async ({ page }) => {
+    await page.goto("/analytics/");
+    const widgets: Record<string, string[]> = {
+      operator: ["partner_league", "driver_risk", "licence_expiry", "mro_board", "device_health"],
+      quality: ["partner_league"],
+      security: ["driver_risk", "driver_events", "driver_top_risk"],
+      customer: ["partner_share"],
+    };
+    for (const p of ["operator", "quality", "security", "customer"] as const) {
+      await setPersona(page, p);
+      await expect(page.getByTestId("an-kpi-x_carrier")).toBeVisible();
+      await expect(page.getByTestId("an-kpi-x_driver")).toBeVisible();
+      for (const w of widgets[p]) await expect(page.getByTestId(`an-widget-${w}`)).toBeVisible();
+    }
+    await setPersona(page, "operator");
+    await expect(page.getByTestId("an-kpi-o_unowned")).toContainText("min");
+    await expect(page.getByTestId("an-widget-partner_league")).toContainText("Najd Haulage Co");
+    await setPersona(page, "quality");
+    await expect(page.getByTestId("an-kpi-q_oob")).toContainText("min");
+  });
+
+  test("TC-E-226 The value table lists six levers and reads its baselines from the live data @regression", async ({ page }) => {
+    await page.goto("/analytics/");
+    await expect(page.getByTestId("value-row")).toHaveCount(6);
+    await expect(page.getByTestId("value-base-1")).toContainText(/\d+ of \d+ cases have no owner/);
+    const levers = await page.getByTestId("value-base-6").innerText();
+    const carrier = Number(levers.match(/Carrier score (\d+)/)![1]);
+    expect(Number((await page.getByTestId("an-kpi-x_carrier").innerText()).match(/\d+/)![0])).toBe(carrier);
+    await expect(page.getByTestId("value-row").first()).toContainText("P1 within 10 min");
+    await setPersona(page, "customer");
+    await expect(page.getByTestId("value-levers")).toHaveCount(0);
+  });
+
+  test("TC-E-227 The partner and driver scorecard reports list real rows and the risk column is translated @regression", async ({ page }) => {
+    await page.goto("/reports/");
+    await page.getByTestId("rep-pick-partner_scorecard").click();
+    await expect(page.getByTestId("rep-row")).toHaveCount(8);
+    await expect(page.getByTestId("rep-table")).toContainText("Najd Haulage Co");
+    await page.getByTestId("rep-pick-driver_scorecard").click();
+    await expect(page.getByTestId("rep-count")).toContainText("100");
+    await expect(page.getByTestId("rep-row")).toHaveCount(25);
+    await expect(page.getByTestId("rep-table")).toContainText(/High risk|Watch|Good/);
+    await setPersona(page, "customer");
+    await expect(page.getByTestId("rep-pick-driver_scorecard")).toHaveCount(0);
+    await expect(page.getByTestId("rep-pick-partner_scorecard")).toBeVisible();
+  });
+
+  test("TC-E-228 A driver added by an operator shows up in the driver scorecard totals of the registry @progression", async ({ page }) => {
+    await openPartners(page);
+    await addPartner(page, { name: "Gulf Road Haulage" });
+    await tab(page, "drivers");
+    await addDriver(page, { name: "Faisal Otaibi", licence: "1999999999", partner: "Gulf Road Haulage" });
+    await page.goto("/analytics/");
+    await expect(page.getByTestId("an-widget-partner_league")).toBeVisible();
+    await page.goto("/partners/");
+    await expect(page.getByTestId("pp-partner-row").filter({ hasText: "Gulf Road Haulage" })).toContainText("1");
+  });
+
+  test("TC-E-229 The people pages, cases and the board work in Arabic and read right to left @regression", async ({ page }) => {
+    await page.goto("/partners/");
+    await setLang(page, "ar");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect(page.getByTestId("pp-partner-table")).toContainText("الشريك");
+    await tab(page, "drivers");
+    await expect(page.getByTestId("pp-driver-table")).toContainText("السائق");
+    await page.goto("/alerts/");
+    await expect(page.getByTestId("cases-view")).toContainText("حالة");
+    await page.goto("/maintenance/");
+    await expect(page.getByTestId("mt-board")).toContainText("الفرز");
+    await page.goto("/container/?id=SC-1060");
+    await expect(page.getByTestId("lifecycle-spine")).toContainText("في الطريق");
+  });
+
+  test("TC-E-230 The new pages have no serious or critical accessibility violations @regression @a11y", async ({ page }) => {
+    for (const url of ["/partners/", "/maintenance/", "/alerts/", "/analytics/", "/container/?id=SC-1060"]) {
+      await page.goto(url);
+      await expect(page.locator("main")).toBeVisible();
+      await page.waitForTimeout(500);
+      expect(await axeSerious(page), url).toEqual([]);
+    }
+    await page.goto("/partners/");
+    await tab(page, "drivers");
+    await page.getByTestId("pp-add-driver").click();
+    expect(await axeSerious(page)).toEqual([]);
+  });
+
+  test("TC-E-231 The new pages fit a phone without sideways scrolling @regression @ux", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    for (const url of ["/partners/", "/maintenance/", "/alerts/", "/analytics/", "/container/?id=SC-1060"]) {
+      await page.goto(url);
+      await expect(page.locator("main")).toBeVisible();
+      await page.waitForTimeout(400);
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(over, url).toBeLessThanOrEqual(1);
+    }
+  });
+});
