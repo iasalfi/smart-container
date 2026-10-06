@@ -11,7 +11,7 @@ Every automated test carries one ID from this bank in its title. `npm run test:b
 
 Pipeline order: lint and type check, test-bank check, unit and API tests, build of both services, end-to-end tests (feature, UI, UX, accessibility, service boundary), then production deploy of the API and the web UI only when every stage is green, then a smoke test on both live URLs with automatic rollback.
 
-Totals: 375 cases. Unit 125, API 41, end-to-end 209. Regression 235, progression 64, negative 76.
+Totals: 381 cases. Unit 128, API 41, end-to-end 212. Regression 240, progression 65, negative 76.
 
 ## Unit tests: data, health model, alerts, route, filters, language
 
@@ -474,3 +474,14 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 | TC-U-146 | Data | regression | FR-80 | Minutes out of band are recorded per container, and reefers with an excursion have some | Read minutes out of band for every container | Whole numbers, never negative, some above zero |
 | TC-U-147 | Analytics | regression | FR-75 | Every persona gets the carrier and driver score, and the operator also gets the unowned case age | Compute analytics for every persona | Carrier and driver score for all, unowned age for operator, minutes out of band for quality |
 | TC-U-148 | Reports | regression | FR-79 | The partner and driver scorecards are offered to the right personas and list real rows | Build the partner and driver scorecards | Offered to the right personas, 100 driver rows sorted by score |
+
+## Arabic everywhere
+
+| ID | Area | Suite | Ref | Title | Steps | Expected |
+|---|---|---|---|---|---|---|
+| TC-U-149 | Language | regression | FR-81 | Digits, separators, percent and units become Arabic | Convert numbers, percent and units to Arabic | Arabic-Indic digits, Arabic separators, percent sign and units |
+| TC-U-150 | Language | regression | FR-81 | Names, cities and plates are written in Arabic | Convert a driver name, a route and a plate | Arabic name, Arabic city names, Arabic plate letters with Arabic digits |
+| TC-U-151 | Language | regression | FR-81 | Identifiers stay Latin and plain text is returned unchanged | Convert identifiers, Arabic text and an empty string | SC, WO and P1 codes untouched, Arabic and empty text unchanged |
+| TC-E-232 | Language | regression | FR-81 | In Arabic the main pages show no Western digits or English words | Open ten pages in Arabic and read every text node | No Western digits or English words except codes, EN and AR, CSV, PDF and map credits |
+| TC-E-233 | Language | regression | FR-81 | Switching back to English restores digits and names | Switch to Arabic and back on the partners page | Arabic digits in Arabic, Western digits and English labels restored |
+| TC-E-234 | Language | progression | FR-81 | Text added while in Arabic is also converted | Add a driver while in Arabic | The new list shows Arabic digits only, apart from codes |
