@@ -1,4 +1,5 @@
 "use client";
+import { useArabicDom } from "@/lib/useArabicDom";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { translate, type Key } from "@/lib/i18n";
 import { DEFAULT_THRESHOLDS, type Thresholds } from "@/lib/alerts";
@@ -126,6 +127,7 @@ export function Providers({ children }: { children: ReactNode }) {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   }, [lang]);
+  useArabicDom(lang);
 
   useEffect(() => {
     if (!ready) return;
