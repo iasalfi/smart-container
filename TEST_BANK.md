@@ -11,7 +11,7 @@ Every automated test carries one ID from this bank in its title. `npm run test:b
 
 Pipeline order: lint and type check, test-bank check, unit and API tests, build of both services, end-to-end tests (feature, UI, UX, accessibility, service boundary), then production deploy of the API and the web UI only when every stage is green, then a smoke test on both live URLs with automatic rollback.
 
-Totals: 315 cases. Unit 104, API 35, end-to-end 176. Regression 196, progression 53, negative 66.
+Totals: 375 cases. Unit 125, API 41, end-to-end 209. Regression 235, progression 64, negative 76.
 
 ## Unit tests: data, health model, alerts, route, filters, language
 
@@ -149,7 +149,7 @@ Totals: 315 cases. Unit 104, API 35, end-to-end 176. Regression 196, progression
 | TC-E-019 | Report | regression | DM-08 | Report for a clean container says no excursions | Open SC-1001 report | No excursions message |
 | TC-E-020 | Admin | regression | DM-09 | Admin shows profile library and device list | Open Admin | 7 profiles, 15 devices |
 | TC-E-021 | Nav | regression | DM-02 | Container tabs navigate between views | Click each tab | Each page loads, current tab highlighted |
-| TC-E-022 | Nav | regression | DM-01 | Main navigation reaches Fleet, Alerts and Admin | Click the links | Pages load, aria-current set |
+| TC-E-022 | Nav | regression | DM-01 | Main navigation reaches the control tower, Cases and Settings | Click Cases, Settings and Control tower | Pages load, aria-current set |
 
 ## End-to-end: service boundary (web UI and API)
 
@@ -363,7 +363,7 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 | ID | Area | Suite | Ref | Case | Steps | Expected result |
 |---|---|---|---|---|---|---|
 | TC-U-117 | Analytics | regression | FR-67 | a customer is scoped to its own containers and everyone else sees the whole fleet | Scope the fleet, alerts and journeys for each persona | Operator and quality see 1,000 containers, a customer sees only its own, with matching alerts and journeys |
-| TC-U-118 | Analytics | regression | FR-65 | each persona gets its own four KPIs and widget set | Compute the analytics for every persona | Four unique KPI ids per persona, the widget list of that persona, finite values |
+| TC-U-118 | Analytics | regression | FR-65 | Each persona gets its own KPIs, plus the carrier and driver scores every persona shares | Compute the analytics for every persona | At least six KPIs per persona, shared score ids, unique persona ids, the widget list of that persona |
 | TC-U-119 | Analytics | regression | FR-65 | the analytics numbers add up to the scope they were computed for | Sum the status, health, cargo, lock and delay series | Every series adds up to the containers or journeys in scope |
 | TC-U-120 | Analytics | regression | FR-65 | quality sees only quality alert types and security only security types | Count open alerts by type for both personas | Only the types of that persona, three security types listed |
 | TC-U-121 | Analytics | regression | FR-65 | delay bands and ETA buckets cover every value once | Bucket edge delays and the customer journeys | Edges fall in the right band and the arrival buckets add up to all journeys |
@@ -373,7 +373,7 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 | TC-E-169 | Analytics | regression | FR-65 | Analytics changes its KPIs and widgets with the persona | Switch through all four personas on Analytics | Each persona shows its own KPIs and widgets and none of the others |
 | TC-E-170 | Analytics | regression | FR-67 | A customer sees only its own containers in analytics and reports | Open Analytics and Reports as the customer | Scope names the customer, fewer than 1,000 containers, no service desk, no operator or security reports, no other customer rows |
 | TC-E-171 | Dashboard | regression | FR-67 | The dashboard strip adapts to the persona and links to analytics and reports | Switch personas on the Fleet page and follow the links | Strip KPIs, side panel and alert types follow the persona and the links keep the persona |
-| TC-E-172 | Navigation | regression | FR-65 | The sidebar lists Analytics and Reports for every persona and marks the current one | Check the sidebar for each persona and open Reports | Both links for all personas, Reports marked current and Fleet not |
+| TC-E-172 | Navigation | regression | FR-65 | The sidebar lists Value for every persona, Reports sits under it, and the current page is marked | Check the sidebar for each persona and open Reports | Value link for all personas, no Reports link, Reports reached from Value, Value marked current |
 | TC-E-173 | Reports | regression | FR-66 | Each persona gets its own report catalogue and the report body follows the pick | Open Reports for each persona and pick a report | Catalogue per persona, the first report opens by default, the body follows the pick |
 | TC-E-174 | Reports | regression | FR-66 | The daily operations report totals match the fleet and can be filtered by cargo and text | Read the totals, filter by text and by cargo | 1,000 containers in the total row, text filter hides the total, cargo filter shows 158 dairy |
 | TC-E-175 | Reports | regression | FR-66 | A report exports to a CSV file that matches the table | Export the daily operations report | A CSV with a BOM, the table header, eight rows and a total row |
@@ -409,3 +409,68 @@ Priority matrix, SLA clocks, support tiers, problem candidates, the route and pi
 | TC-E-196 | Live map | regression | FR-68 | The live map and the route planner have no serious accessibility violations | Run the accessibility scan for every role, the planner and its error state | No serious or critical violations |
 | TC-E-197 | Live map | regression | FR-68 | The live map fits desktop, tablet and phone without sideways scrolling and keeps 40 px controls | Open at 1360, 768 and 390 px wide | No horizontal scroll, a map taller than 300 px and controls at least 40 px tall |
 | TC-E-198 | Live map | regression | FR-68 | Clicking a container on the map selects it | Filter to critical containers and click a rendered point | The side panel opens for the container that was clicked |
+
+## Partners, drivers, cases, maintenance and lifecycle
+
+| ID | Area | Suite | Ref | Case | Steps | Expected result |
+|---|---|---|---|---|---|---|
+| TC-A-053 | Partners | regression | FR-72 | Partners lists the 8 freight companies with a scorecard each | GET /api/v1/partners | 8 partners with scorecards covering all 1,000 containers |
+| TC-A-054 | Partners | regression | FR-72 | Partners can be filtered by status | GET /api/v1/partners?status=probation | Only probation partners |
+| TC-A-055 | Partners | negative | FR-72 | An unknown partner status returns 400 with an error code | GET /api/v1/partners?status=gold | 400 invalid_partner_status |
+| TC-A-056 | Drivers | regression | FR-73 | Drivers lists 320 drivers with paging | GET /api/v1/drivers with limit and offset | 320 total, page of 10 starting at the 6th driver |
+| TC-A-057 | Drivers | regression | FR-73 | Drivers can be filtered by partner and by risk band | GET /api/v1/drivers filtered by partner and risk | 40 for one partner, risk bands match the scores |
+| TC-A-058 | Drivers | negative | FR-73 | Bad driver filters return 400 with an error code | Send bad partner, risk, limit and offset values and a POST | 400 with the right error code each time, 405 for POST |
+| TC-E-199 | Partners | regression | FR-72 | The partners page lists the 8 freight companies with a grade and the containers each carries | Open Partners and filter by status | 8 rows with grades, probation filter shows 2 |
+| TC-E-200 | Partners | progression | FR-72 | An operator adds a partner, sees it in the table, and it is still there after a reload | Add a partner and reload | 9 rows, message names the partner, still there after reload |
+| TC-E-201 | Partners | negative | FR-72 | A partner with bad details is refused with a message for each problem and nothing is saved | Submit a partner with five bad fields, then one | Five messages, then one, nothing saved |
+| TC-E-202 | Partners | negative | FR-72 | A partner name that already exists is refused, whatever the letter case | Add a partner whose name differs only in letter case | Refused as already used |
+| TC-E-203 | Partners | progression | FR-72 | An operator edits a partner and the change shows at once | Edit a partner status to suspended | The row and the status filter show it at once |
+| TC-E-204 | Drivers | regression | FR-73 | The drivers tab lists 320 drivers, filters by partner and risk, and pages through them | Open the drivers tab, page, filter by partner and risk | 320 drivers, 25 per page, filters narrow the list |
+| TC-E-205 | Drivers | progression | FR-73 | An operator adds a driver and the licence number must be new | Add a driver and search for them | 321 drivers, new driver starts at score 100 |
+| TC-E-206 | Drivers | negative | FR-73 | A driver with a bad phone, a short licence number or a taken licence number is refused | Submit a driver with bad phone and licence, then a taken licence | Three messages, then an already used message, no extra driver |
+| TC-E-207 | Drivers | progression | FR-74 | Logging a driver event lowers the safety score by the event's points and a future date is refused | Log a rest breach with a future date, then today | Future date refused, today lowers the score by 8 |
+| TC-E-208 | Drivers | progression | FR-74 | Assigning a driver to a container shows the new driver on the container page | Assign a new driver to SC-1060 and open the container | Driver and partner change on the page and in the header |
+| TC-E-209 | Drivers | negative | FR-74 | Assigning to a container that does not exist, or with no driver chosen, is refused | Assign to an unknown container, then with no driver | Both refused with a message |
+| TC-E-210 | Access | negative | FR-72 | A customer cannot open the partner and maintenance pages | Switch to customer and open Partners and Maintenance | No nav links and a not available state |
+| TC-E-211 | Access | negative | FR-72 | Quality and security can read the partner records but cannot change them | Open Partners as quality and security | Read only note, no add, edit, log or assign |
+| TC-E-212 | Access | negative | FR-72 | Admin can remove a partner with no containers but not one that still carries them | Remove a partner in Settings, with and without containers | Blocked while it carries containers, removed when empty |
+| TC-E-213 | Cases | regression | FR-76 | The alerts page opens on cases, which are fewer than the alarms behind them, and the toggle shows every alarm | Open Cases and switch to All alarms | Fewer cases than 102 alarms, merged chips, 102 alarm rows in the other view |
+| TC-E-214 | Cases | regression | FR-76 | Cases can be searched by container and each one shows how late the response and fix are | Search cases and check the breach lines | Search narrows to one, empty state, response and fix breaches shown |
+| TC-E-215 | Cases | progression | FR-76 | Taking a case makes you its owner and moves it off the unassigned list, and resolving it closes it | Take a case, then resolve it | Owner is you, case leaves the list, shows under resolved, unassigned alarms drop below 102 |
+| TC-E-216 | Maintenance | progression | FR-77 | A case that needs a repair opens a work order, which moves across the board and releases the container | Open a work order from a repair case and run it through the board | Case moves into maintenance, order crosses five columns, release resolves the case |
+| TC-E-217 | Maintenance | regression | FR-77 | The maintenance board shows example orders in several stages and a list of trackers that need a visit | Open the maintenance board | Example orders in three or more columns, device list shown |
+| TC-E-218 | Maintenance | progression | FR-77 | A tracker that needs a visit gets a preventive work order once, and the share of preventive work goes up | Raise a work order from the device list | Open count goes up by one, order in triage, button replaced by a note |
+| TC-E-219 | Access | negative | FR-77 | Quality and security can see the board but cannot move orders or raise new ones | Open the board and Cases as quality and security | No move, raise, take or open work order actions |
+| TC-E-220 | Maintenance | progression | FR-77 | Admin can change the tracker triggers, the maintenance list follows, and bad values are refused | Change the tracker battery trigger in Settings | Bad value refused, saved value lengthens the device list, reset restores it |
+| TC-E-221 | Control tower | regression | FR-76 | The control tower lists the cases that need you now and links to all of them | Open the control tower | Needs you now panel with up to 6 cases and a link to all |
+| TC-E-222 | Lifecycle | regression | FR-78 | A container shows six lifecycle stages with the current one marked, and its driver and carrier | Open SC-1060 | Six stages, in transit current, driver and carrier named |
+| TC-E-223 | Lifecycle | progression | FR-78 | A delivered container can be marked unloaded and returned to service, and the stage follows | Open SC-1100 and use the post delivery buttons | Unloaded, then back in service, kept after reload |
+| TC-E-224 | Lifecycle | regression | FR-78 | A container in repair shows the maintenance branch on its lifecycle | Open a container that has a work order | Maintenance branch shows the order |
+| TC-E-225 | Analytics | regression | FR-75 | Every persona sees the carrier and driver scores, and each gets its own people widgets | Open Value for each persona | Carrier and driver score for all, people widgets per persona |
+| TC-E-226 | Analytics | regression | FR-79 | The value table lists six levers and reads its baselines from the live data | Open Value as operator and customer | Six levers, live baselines match the KPIs, hidden for customer |
+| TC-E-227 | Reports | regression | FR-79 | The partner and driver scorecard reports list real rows and the risk column is translated | Open the partner and driver scorecards | 8 partners, 100 drivers with 25 per page, risk text, hidden for customer where it should be |
+| TC-E-228 | Partners | progression | FR-72 | A driver added by an operator shows up in the driver scorecard totals of the registry | Add a partner and a driver for it, then open Value and Partners | The new partner counts one driver |
+| TC-E-229 | Language | regression | FR-72 | The people pages, cases and the board work in Arabic and read right to left | Switch to Arabic and open the new pages | Right to left layout and Arabic labels |
+| TC-E-230 | Accessibility | regression | FR-72 | The new pages have no serious or critical accessibility violations | Run axe on the new pages and the driver form | No serious or critical violations |
+| TC-E-231 | Responsive | regression | FR-72 | The new pages fit a phone without sideways scrolling | Open the new pages at 390 px wide | No sideways scroll |
+| TC-U-128 | Partners | regression | FR-72 | The registry holds 8 partners and 40 drivers each, with unique licence numbers, and never changes | Read the seeded registry twice | 8 partners, 40 drivers each, unique ids and licences, same object, events inside 30 days |
+| TC-U-129 | Partners | regression | FR-74 | Every container has a driver and a partner, and a reefer always has a cold chain driver | Check the driver every container is given | Known active driver of the same partner, cold chain trained for every reefer |
+| TC-U-130 | Partners | regression | FR-72 | A partner is checked for name, depot, contact, phone, fleet size and dates | Validate a good partner and one bad field at a time | No errors for the good one, one named error for each bad field |
+| TC-U-131 | Partners | regression | FR-73 | A driver is checked for name, partner, phone, licence number, class, expiry and experience | Validate a good driver and one bad field at a time | No errors for the good one, one named error for each bad field |
+| TC-U-132 | Partners | regression | FR-74 | A driver event needs a known driver, a valid type and a date between 90 days ago and today | Validate driver events with each kind of bad input | Unknown driver, type, bad date, future, older than 90 days and long note are named |
+| TC-U-133 | Partners | regression | FR-74 | An assignment is refused for an expired licence, an inactive driver, a suspended partner or a missing cold chain course | Check assignments against licence, status, partner and cold chain | Each rule returns its own error and the eligible pool follows them |
+| TC-U-134 | Partners | regression | FR-73 | Licence state and ids follow the demo date | Check licence state at the boundaries and the next ids | Expired below today, 30 and 90 day bands, DR-1321, FP-09, EV-0001 |
+| TC-U-135 | Scores | regression | FR-75 | A driver starts at 100 and loses points for events, open alerts and a licence that has run out | Score a driver with events, alerts and licence states | 100 less the event points, 6 per critical, 2 per warning, 25 expired, 5 under 30 days, floor 0 |
+| TC-U-136 | Scores | regression | FR-75 | Risk bands split at 60 and 80 and grades at 55, 70 and 85 | Classify scores at the band edges | Risk bands at 60 and 80, grades at 55, 70 and 85 |
+| TC-U-137 | Scores | regression | FR-75 | A carrier score weighs on time 30, cold chain 25, alerts 25 and safety 20, and drops cold chain when there are no reefers | Score a carrier while changing one input at a time | Weights 30, 25, 25 and 20, and cold chain dropped without reefers |
+| TC-U-138 | Scores | regression | FR-75 | The people view covers every container once and its scores stay between 0 and 100 | Build the people view for the whole fleet | Every container once, scores 0 to 100, bands and licence counts add up, sorted by score |
+| TC-U-139 | Scores | regression | FR-74 | Reassigning a container moves it to the new driver and carrier in the scorecards | Reassign one container and rebuild the view | The new partner and driver gain one container and the old partner loses one |
+| TC-U-140 | Cases | regression | FR-76 | Alarms group into one case per container, ranked by priority then age | Group the 102 alarms into cases | One case per container, merged counts add up to 102, sorted by priority |
+| TC-U-141 | Cases | regression | FR-76 | A case that needs a repair can open a work order, which moves it into maintenance | Add a work order for a repair case | The case is in maintenance and carries the work order id |
+| TC-U-142 | Cases | regression | FR-76 | Case counts report the oldest case nobody owns | Count cases with and without owners | Unowned count and oldest age match, zero when all are owned |
+| TC-U-143 | Maintenance | regression | FR-77 | Work orders move through five stages and ids keep counting up | Advance a work order past the last stage and number new orders | Stops at stage 5, ids count up, example orders cover several stages |
+| TC-U-144 | Maintenance | regression | FR-77 | A tracker needs a visit when it is offline, low on battery, or has a weak signal and a weak battery | Run the tracker rules on edge values and custom limits | 25 percent battery, 25 minutes offline, signal only with battery 40 or less |
+| TC-U-145 | Lifecycle | regression | FR-78 | The lifecycle has six stages, delay is a flag, and delivered assets can be unloaded and returned | Read the lifecycle stage of every journey and apply post delivery steps | Six stages, unloaded then back in service, no step after that |
+| TC-U-146 | Data | regression | FR-80 | Minutes out of band are recorded per container, and reefers with an excursion have some | Read minutes out of band for every container | Whole numbers, never negative, some above zero |
+| TC-U-147 | Analytics | regression | FR-75 | Every persona gets the carrier and driver score, and the operator also gets the unowned case age | Compute analytics for every persona | Carrier and driver score for all, unowned age for operator, minutes out of band for quality |
+| TC-U-148 | Reports | regression | FR-79 | The partner and driver scorecards are offered to the right personas and list real rows | Build the partner and driver scorecards | Offered to the right personas, 100 driver rows sorted by score |
