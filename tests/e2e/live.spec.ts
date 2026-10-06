@@ -210,7 +210,7 @@ test.describe("Live map: tracking and route planning on MapLibre", () => {
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
     await expect(page.getByTestId("live-tab-plan")).toHaveText("مخطط المسار");
     await expect(page.getByTestId("live-city").filter({ hasText: "الرياض" })).toHaveCount(1);
-    await expect(page.getByTestId("live-count")).toContainText("1,000");
+    await expect(page.getByTestId("live-count")).toContainText("١٬٠٠٠");
     await page.getByTestId("live-tab-plan").click();
     await expect(page.getByTestId("plan-origin")).toContainText("جدة");
     await expect(page.getByTestId("plan-summary")).toHaveAttribute("data-source", "road", { timeout: 20000 });
