@@ -294,6 +294,8 @@ test.describe("Cases and maintenance", () => {
   test("TC-E-217 The maintenance board shows example orders in several stages and a list of trackers that need a visit @regression", async ({ page }) => {
     await page.goto("/maintenance/");
     await expect(page.getByTestId("mt-board")).toBeVisible();
+    await expect(page.getByTestId("mt-card").first()).toBeVisible();
+    await expect(page.getByTestId("mt-dev-row").first()).toBeVisible();
     const total = await page.getByTestId("mt-card").count();
     expect(total).toBeGreaterThanOrEqual(3);
     let filled = 0;
@@ -306,6 +308,7 @@ test.describe("Cases and maintenance", () => {
 
   test("TC-E-218 A tracker that needs a visit gets a preventive work order once, and the share of preventive work goes up @progression", async ({ page }) => {
     await page.goto("/maintenance/");
+    await expect(page.getByTestId("mt-card").first()).toBeVisible();
     const open = Number((await page.getByTestId("mt-k-open").innerText()).match(/\d+/)![0]);
     const row = page.getByTestId("mt-dev-row").filter({ has: page.getByTestId("mt-raise") }).first();
     const cid = (await row.locator("th a").innerText()).trim();
@@ -330,6 +333,7 @@ test.describe("Cases and maintenance", () => {
 
   test("TC-E-220 Admin can change the tracker triggers, the maintenance list follows, and bad values are refused @progression", async ({ page }) => {
     await page.goto("/maintenance/");
+    await expect(page.getByTestId("mt-card").first()).toBeVisible();
     const before = Number((await page.getByTestId("mt-k-devices").innerText()).match(/\d+/)![0]);
     await page.goto("/admin/");
     await page.getByTestId("lim-battery").fill("0");
