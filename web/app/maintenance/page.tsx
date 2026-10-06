@@ -14,7 +14,7 @@ export default function MaintenancePage() {
   if (persona === "customer") return <NotFoundState title={t("not_allowed_title")} body={t("not_allowed_body")} />;
   if (!fleet) return <ApiGate error={apiError} onRetry={retry} />;
   const hasOrder = (cid: string) => workOrders.some((w) => w.containerId === cid);
-  const reasonText = (w: WorkOrder) => t(w.reason.startsWith("tracker_") || ["door_seal", "compressor", "sensor_recal"].includes(w.reason) ? (`wo_reason_${w.reason}` as Key) : (`alert_type_${w.reason}` as Key));
+  const reasonText = (w: WorkOrder) => t(w.reason.startsWith("tracker_") || ["door_seal", "compressor", "sensor_recal"].includes(w.reason) ? (`wo_reason_${w.reason}` as Key) : (`alert_type_${w.reason}` as Key), w.params);
   const preventive = workOrders.filter((w) => w.kind === "preventive").length;
   const share = workOrders.length ? Math.round((100 * preventive) / workOrders.length) : 0;
   return (
@@ -69,7 +69,7 @@ export default function MaintenancePage() {
                 {issues.slice(0, 40).map((d) => (
                   <tr key={d.containerId} data-testid="mt-dev-row">
                     <th scope="row"><Link href={`/container/?id=${d.containerId}`}>{d.containerId}</Link></th>
-                    <td>{t(`wo_reason_${d.reason}` as Key)}</td><td>{d.batteryPct}%</td><td>{d.signal}/5</td>
+                    <td>{t(`wo_kind_${d.reason}` as Key)}</td><td>{d.batteryPct}%</td><td>{d.signal}/5</td>
                     {canAct ? <td>{hasOrder(d.containerId) ? <span className="muted small">{t("mt_has_order")}</span> : <button type="button" className="btn-sm" onClick={() => raiseDeviceOrder(d)} data-testid="mt-raise">{t("mt_raise")}</button>}</td> : null}
                   </tr>
                 ))}
