@@ -29,6 +29,8 @@ The web UI holds no fleet data. It calls the API for the fleet, each container, 
 | `GET /api/v1/fleet` | Fleet with status counts. Filters: `status`, `profile`, `reefer`, `q`, `customer`, `limit`, `offset` |
 | `GET /api/v1/containers/{id}` | One container with health, forecast, stops, deviation, excursions, alerts |
 | `GET /api/v1/containers/{id}/series` | 289 readings, five minutes apart, oldest first |
+| `GET /api/v1/partners` | The 8 freight companies (truck providers) with a scorecard each. Filter: `status` (active, probation, suspended) |
+| `GET /api/v1/drivers` | The 320 drivers with a scorecard. Filters: `partner`, `risk` (high, watch, good), `limit`, `offset` |
 | `GET /api/v1/alerts` | Alerts, critical first. Filters: `severity`, `q`, `customer`, and any threshold (`deviationKm=5`) |
 
 Errors are JSON: `{"error":{"code":"container_not_found","message":"..."}}` with 400, 404 or 405.
@@ -45,6 +47,18 @@ Errors are JSON: `{"error":{"code":"container_not_found","message":"..."}}` with
 
 **Live map (`/live/`).** A MapLibre GL map (loaded from the jsDelivr CDN on first use) with two tabs. *Live tracking* puts every container the signed-in role may see on a real base map (OpenStreetMap vector tiles from OpenFreeMap, no key needed). Each corridor is fetched once from the OSRM routing service, and trucks are placed along that road at their progress, then advance on a demo clock (one second is one minute on the road) that can be paused. Selecting a container draws its whole road with the part already driven, the truck facing its direction of travel, both end cities, speed, distance left and arrival time, and the truck can be followed. Status filters and search narrow the map and the list, and a customer sees only its own containers. *Route planner* (operator, quality and security) takes an origin, up to two stops on the way, a destination, a departure and a speed, draws the road from OSRM with route options, and places the planned rest, fuel and overnight stops on it by distance. The container and journey pages link to the live map. When OSRM cannot be reached the map falls back to the planned corridor and says so; when the base map cannot load it draws routes on a plain background. Road geometry helpers are in `packages/domain/src/roads.ts` and the services are configured in `web/lib/maplib.ts` (`NEXT_PUBLIC_MAP_STYLE` swaps the base map). Browser tests answer the style and routing requests themselves; set `MAPLIBRE_DIST` to a folder holding `maplibre-gl.js` and `.css` to run them without internet.
 
+**Freight partners and drivers (`/partners/`, and the registry in Settings).** Every container has a driver and a freight company (truck provider). The registry holds 8 partners and 320 drivers, seeded and deterministic (`packages/domain/src/partners.ts`). Operators add and edit partners and drivers, log driver events (speeding, harsh braking, rest breach, late check-in, unsafe stop) and assign a driver to a container. Every input is validated in the domain package, so the same rules guard the form and any later API: names, Saudi mobile numbers (`05` plus 8 digits), 10 digit licence numbers that must be unique, dates, truck counts, a reefer needing a cold chain driver, and no assignment of an expired licence, an inactive driver or a suspended partner. Quality and security can read the registry. Customers cannot open it. In Settings an operator can also remove a partner or driver, but not while they still carry containers. Changes live in the browser (`scm-demo-v1`), as the rest of the demo state does.
+
+**Carrier and driver scores (`packages/domain/src/people.ts`).** Driver safety score: 100, less the points of every logged event in the last 30 days (speeding 5, harsh braking 3, rest breach 8, late check-in 2, unsafe stop 6), less 6 per open critical alert and 2 per open warning on their containers, less 25 for an expired licence and 5 for one that runs out within 30 days, never below 0. Under 60 is high risk, 60 to 79 is watch, 80 and over is good. Carrier score: 30% on-time journeys, 25% cold chain (share of reefers inside their band, left out when the partner has no reefers), 25% alert rate (100 less 4 per 100 containers) and 20% driver safety. Grade A from 85, B from 70, C from 55, D below. Two KPIs from this, the carrier score and the driver score, now sit on every persona's dashboard strip and Value page, next to widgets for the partner league, driver risk, licence expiry, event mix and the drivers to look at first. Two new reports list the partner and driver scorecards.
+
+**Cases (`/alerts/`).** The alerts page opens on cases: one per container, however many alarms it raised, ranked by priority and age. A case shows how many alarms it holds, its owner, and how far past the response and resolution targets it is. An operator can take a case, open a work order for a repair case (reefer set point, temperature critical, gas) or mark it resolved. The full alarm list and the service desk tools are one click away (`/alerts/?view=alarms`). The control tower lists the cases that need you now.
+
+**Maintenance (`/maintenance/`).** A board with five columns (triage, diagnose, repair, test, ready) for work orders raised from cases or from the tracker list. A work order that reaches ready can be released, which resolves its case. The device list shows trackers that need a visit before they fail (battery 25% or lower, offline 25 minutes or more, or a weak signal with the battery at 40% or lower). Settings holds the trigger values. Example orders ship with the demo so the board is not empty.
+
+**Lifecycle.** A container page shows six stages (booked, loaded and sealed, in transit, at destination, unloaded and inspected, back in service) with the current one marked, a running-late flag, and the maintenance branch when an order is open. An operator records the two post-delivery steps.
+
+**Value.** The Analytics page is named Value in the menu. For the operator it ends with a table of six levers (every exception has an owner, an alarm leads to repair, tracking after delivery, cargo value, preventive repair, carrier and driver accountability) with baselines read live from the data on screen. Targets are proposals for the customer to confirm. Reports now open from the Value page.
+
 ## Run it locally
 
 ```bash
@@ -57,7 +71,7 @@ Or both in containers: `docker compose up --build` (web on 8080, API on 4100).
 
 ## Tests
 
-The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 315 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
+The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 375 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
 
 | Command | What it runs |
 |---|---|
