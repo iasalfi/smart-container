@@ -53,6 +53,8 @@ Errors are JSON: `{"error":{"code":"container_not_found","message":"..."}}` with
 
 **Cases (`/alerts/`).** The alerts page opens on cases: one per container, however many alarms it raised, ranked by priority and age. A case shows how many alarms it holds, its owner, and how far past the response and resolution targets it is. An operator can take a case, open a work order for a repair case (reefer set point, temperature critical, gas) or mark it resolved. The full alarm list and the service desk tools are one click away (`/alerts/?view=alarms`). The control tower lists the cases that need you now.
 
+**Arabic.** The EN | AR switch changes the whole interface, right to left. Word lists live in `web/lib/i18n*.ts`. Data that is not in those lists (numbers, percent, units, driver and partner names, cities, plates) is converted in the browser by `web/lib/arlocal.ts`, which a small hook (`web/lib/useArabicDom.ts`) applies to every text, placeholder and label on the page, including text that appears later. Numbers become Arabic-Indic digits. Identifiers such as SC-1060, WO-12, DR-1321 and P1 stay in Latin so they can be matched against other systems. Switching back to English restores the original text.
+
 **Maintenance (`/maintenance/`).** A board with five columns (triage, diagnose, repair, test, ready) for work orders raised from cases or from the tracker list. A work order that reaches ready can be released, which resolves its case. The device list shows trackers that need a visit before they fail (battery 25% or lower, offline 25 minutes or more, or a weak signal with the battery at 40% or lower). Settings holds the trigger values. Example orders ship with the demo so the board is not empty.
 
 **Lifecycle.** A container page shows six stages (booked, loaded and sealed, in transit, at destination, unloaded and inspected, back in service) with the current one marked, a running-late flag, and the maintenance branch when an order is open. An operator records the two post-delivery steps.
@@ -71,12 +73,12 @@ Or both in containers: `docker compose up --build` (web on 8080, API on 4100).
 
 ## Tests
 
-The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 375 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
+The test bank is `tests/bank.json` (readable copy: `TEST_BANK.md`): 381 cases, each with an ID, steps and expected result. `npm run test:bank` fails if a case has no automated test, a test has no bank entry, or a browser test is missing its tags.
 
 | Command | What it runs |
 |---|---|
 | `npm run test:unit` | Domain unit tests (health score, forecast, rule engine, route maths, filters), translation tests, and 35 API tests (every endpoint, validation, errors, a real HTTP socket) |
-| `npm run test:e2e` | 142 browser tests (Playwright, Chromium) against the real web build and the real API, including outage, 500, slow-API and CORS cases |
+| `npm run test:e2e` | 209 browser tests (Playwright, Chromium) against the real web build and the real API, including outage, 500, slow-API and CORS cases |
 | `npm run test:regression` / `test:progression` / `test:negative` / `test:a11y` | One suite at a time, by tag |
 | `npm run test:smoke` | 3 checks against live URLs (`SMOKE_URL`, `API_URL`) |
 | `npm test` | bank check + unit + browser |
